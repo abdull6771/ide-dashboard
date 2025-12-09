@@ -1,8 +1,8 @@
 [phases.setup]
-nixPkgs = ["python312"]
+nixPkgs = ["python312", "pip"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = ["python -m pip install --upgrade pip", "python -m pip install -r requirements.txt"]
 
 [start]
 cmd = "gunicorn dash_app_full:server --bind 0.0.0.0:$PORT --workers 4 --timeout 120"
