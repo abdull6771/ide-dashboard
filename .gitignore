@@ -1,0 +1,45 @@
+# Environment
+.env
+.venv/
+venv/
+env/
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Database
+*.sql
+*.db
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+Annual_Report_all/
+annual_reports/
+processed_files.json
+*.json
+!requirements.txt
+
+# Logs
+*.log
+streamlit.log
+
+# Temporary files
+*.tmp
+*.bak
+*.backup
