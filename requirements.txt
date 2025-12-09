@@ -9,9 +9,12 @@ wordcloud==1.9.3
 matplotlib==3.9.2
 pandas==2.2.3
 numpy<2.0.0
-openpyxl==3.1.2
 
 # Database
 SQLAlchemy==2.0.23
 pymysql==1.1.1
+
+# API
+Flask==3.0.0
+Flask-CORS==4.0.0
 
