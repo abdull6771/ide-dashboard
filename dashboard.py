@@ -539,9 +539,13 @@ def render_ai_query_tab(db_config):
     </div>
     """, unsafe_allow_html=True)
     
-    # Initialize RAG helper
-    if 'rag_helper' not in st.session_state:
-        st.session_state.rag_helper = RAGQueryHelper(db_config)
+    # Initialize RAG helper (only once per session)
+    if st.session_state.rag_helper is None:
+        try:
+            st.session_state.rag_helper = RAGQueryHelper(db_config)
+        except Exception as e:
+            st.error(f"Failed to initialize query helper: {e}")
+            return
     
     # Sample questions for researchers
     with st.expander("📚 Example Research Questions", expanded=False):
@@ -580,10 +584,7 @@ def render_ai_query_tab(db_config):
     with col2:
         clear_button = st.button("🗑️ Clear History", use_container_width=True)
     
-    # Initialize session state for chat history
-    if 'query_history' not in st.session_state:
-        st.session_state.query_history = []
-    
+    # Clear history if requested (session state already initialized in main)
     if clear_button:
         st.session_state.query_history = []
         st.rerun()
@@ -1577,6 +1578,18 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded"
     )
+
+    # Initialize session state variables BEFORE any other operations
+    if 'show_citation' not in st.session_state:
+        st.session_state.show_citation = False
+    if 'show_methodology' not in st.session_state:
+        st.session_state.show_methodology = False
+    if 'show_stats' not in st.session_state:
+        st.session_state.show_stats = False
+    if 'query_history' not in st.session_state:
+        st.session_state.query_history = []
+    if 'rag_helper' not in st.session_state:
+        st.session_state.rag_helper = None
 
     apply_custom_css()
     
