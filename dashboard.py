@@ -25,9 +25,6 @@ pio.json.config.default_engine = "json"
 # Load environment variables
 load_dotenv()
 
-# Configure Gemini
-genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-
 # Database configuration
 DB_CONFIG = {
     'host': os.getenv('MYSQL_HOST', 'localhost'),
@@ -1559,6 +1556,13 @@ def main():
         st.session_state.query_history = []
     if 'rag_helper' not in st.session_state:
         st.session_state.rag_helper = None
+
+    # Configure Gemini API (after session state initialization)
+    if os.getenv('GOOGLE_API_KEY'):
+        try:
+            genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+        except Exception:
+            pass  # Silent fail if API key is invalid
 
     apply_custom_css()
     
