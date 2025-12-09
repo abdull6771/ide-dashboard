@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["python312"]
+
+[phases.install]
+cmds = ["pip install -r requirements-dash.txt"]
+
+[start]
+cmd = "gunicorn dash_app_full:server --bind 0.0.0.0:$PORT --workers 4 --timeout 120"
