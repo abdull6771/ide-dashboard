@@ -13,6 +13,11 @@ from sqlalchemy import create_engine
 from urllib.parse import quote
 import google.generativeai as genai
 from nl_query_helper import RAGQueryHelper
+from research_enhancements import (
+    export_data_to_csv, export_data_to_excel, generate_citation_info,
+    generate_methodology_section, render_data_quality_dashboard,
+    render_statistical_summary
+)
 
 # Fix plotly orjson compatibility issue
 pio.json.config.default_engine = "json"
@@ -470,7 +475,28 @@ def render_metric_cards(filtered_df):
 
 def render_quick_insights(filtered_df):
     """Display research summary with key findings"""
-    with st.expander(" Research Summary & Key Findings", expanded=True):
+    
+    # Add export button before insights
+    col_export1, col_export2, col_export3 = st.columns([1, 1, 2])
+    with col_export1:
+        if st.button("📥 Export Filtered Data"):
+            csv_data = export_data_to_csv(filtered_df, "ide_research_export.csv")
+            st.download_button(
+                label="Download CSV",
+                data=csv_data,
+                file_name=f"ide_research_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+                mime="text/csv"
+            )
+    with col_export2:
+        if st.button("📄 Citation Info"):
+            st.session_state.show_citation = True
+    
+    if st.session_state.get('show_citation', False):
+        st.markdown(generate_citation_info())
+        if st.button("Close Citation Info"):
+            st.session_state.show_citation = False
+    
+    with st.expander("📊 Research Summary & Key Findings", expanded=True):
         if not filtered_df.empty:
             try:
                 top_company = filtered_df['company_name'].mode()[0] if not filtered_df['company_name'].empty else "N/A"
@@ -1473,6 +1499,27 @@ def main():
         A comprehensive analytical platform for examining corporate digital transformation strategies, 
         technology adoption patterns, and policy implications across Malaysian publicly-listed companies.
     </p>''', unsafe_allow_html=True)
+    
+    # Add methodology and citation sections
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1:
+        if st.button("📚 Citation & How to Cite"):
+            st.session_state.show_citation = True
+    with col2:
+        if st.button("🔬 Research Methodology"):
+            st.session_state.show_methodology = True
+    
+    if st.session_state.get('show_citation', False):
+        st.markdown(generate_citation_info())
+        if st.button("✖️ Close Citation"):
+            st.session_state.show_citation = False
+            st.rerun()
+    
+    if st.session_state.get('show_methodology', False):
+        st.markdown(generate_methodology_section())
+        if st.button("✖️ Close Methodology"):
+            st.session_state.show_methodology = False
+            st.rerun()
 
     df = load_data()
     if df.empty:
@@ -1482,6 +1529,38 @@ def main():
     filtered_df = render_sidebar_filters(df)
     
     render_metric_cards(filtered_df)
+    st.markdown("---")
+    
+    # Add export and statistics section
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 3])
+    with col1:
+        csv_data = export_data_to_csv(filtered_df)
+        st.download_button(
+            label="📥 Export CSV",
+            data=csv_data,
+            file_name=f"ide_research_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+            mime="text/csv",
+            help="Download filtered data as CSV"
+        )
+    with col2:
+        excel_data = export_data_to_excel(filtered_df)
+        st.download_button(
+            label="📊 Export Excel",
+            data=excel_data,
+            file_name=f"ide_research_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            help="Download with summary sheets"
+        )
+    with col3:
+        if st.button("📈 Show Statistics"):
+            st.session_state.show_stats = not st.session_state.get('show_stats', False)
+    
+    if st.session_state.get('show_stats', False):
+        with st.expander("📊 Comprehensive Statistical Summary", expanded=True):
+            render_statistical_summary(filtered_df)
+            st.markdown("---")
+            render_data_quality_dashboard(filtered_df)
+    
     st.markdown("---")
     render_quick_insights(filtered_df)
 
