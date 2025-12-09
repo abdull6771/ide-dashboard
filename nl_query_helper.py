@@ -170,7 +170,12 @@ SQL QUERY:"""
             pandas DataFrame with results
         """
         try:
-            conn = pymysql.connect(**self.db_config)
+            conn = pymysql.connect(
+                **self.db_config,
+                connect_timeout=30,
+                read_timeout=30,
+                write_timeout=30
+            )
             df = pd.read_sql(sql, conn)
             conn.close()
             logging.info(f"Query returned {len(df)} rows")
