@@ -22,15 +22,16 @@ railway link
 
 # Add environment variables
 echo ""
-echo "⚙️  Step 3: Add environment variables"
+echo "⚙️  Step 3: Setting environment variables"
 echo "Adding database credentials..."
 
-railway variables set MYSQL_HOST=centerbeam.proxy.rlwy.net
-railway variables set MYSQL_PORT=22865
-railway variables set MYSQL_USER=root
-railway variables set MYSQL_PASSWORD=muNxavWmbDYZgFlrFmSwbaXZANXMmIoJ
-railway variables set MYSQL_DATABASE=railway
-railway variables set PORT=8050
+railway variables --set "MYSQL_HOST=centerbeam.proxy.rlwy.net" \
+                  --set "MYSQL_PORT=22865" \
+                  --set "MYSQL_USER=root" \
+                  --set "MYSQL_PASSWORD=muNxavWmbDYZgFlrFmSwbaXZANXMmIoJ" \
+                  --set "MYSQL_DATABASE=railway" \
+                  --set "PORT=8050" \
+                  --skip-deploys
 
 echo ""
 echo "✅ Environment variables added!"
