@@ -1542,7 +1542,7 @@ def render_footer(df, filtered_df):
 
 
 def main():
-    """Main application entry point - Clean version without research_enhancements"""
+    """Main application entry point - Clean version without research_enhancements (v2.0)"""
     # Page configuration - must be first Streamlit command
     st.set_page_config(
         page_title="Digital Economy Research Dashboard",

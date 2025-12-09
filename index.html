@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Economy Research Dashboard</title>
+    <style>
+      /* Modern CSS Reset & Base Styles */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        /* Color System - Modern 2025 Palette */
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --secondary: #10b981;
+        --accent: #8b5cf6;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+
+        /* Neutral Colors */
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+
+        /* Spacing System */
+        --space-xs: 0.25rem;
+        --space-sm: 0.5rem;
+        --space-md: 1rem;
+        --space-lg: 1.5rem;
+        --space-xl: 2rem;
+        --space-2xl: 3rem;
+
+        /* Typography */
+        --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI",
+          "Roboto", sans-serif;
+        --font-mono: "SF Mono", "Monaco", "Cascadia Code", monospace;
+
+        /* Shadows - Modern depth system */
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
+        --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+          0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+        /* Border Radius */
+        --radius-sm: 0.375rem;
+        --radius-md: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-xl: 1rem;
+
+        /* Transitions */
+        --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      html {
+        scroll-behavior: smooth;
+        font-size: 16px;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background: var(--gray-50);
+        color: var(--gray-900);
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+
+      /* Container System */
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 var(--space-lg);
+      }
+
+      /* Header - Glassmorphism Style */
+      .header {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid var(--gray-200);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding: var(--space-lg) 0;
+      }
+
+      .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--space-lg);
+      }
+
+      .logo {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--accent) 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: var(--space-md);
+        align-items: center;
+      }
+
+      /* Hero Section */
+      .hero {
+        padding: var(--space-2xl) 0;
+        text-align: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        opacity: 0.5;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 1;
+      }
+
+      .hero h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 700;
+        margin-bottom: var(--space-md);
+        letter-spacing: -0.02em;
+        line-height: 1.2;
+      }
+
+      .hero p {
+        font-size: 1.125rem;
+        max-width: 800px;
+        margin: 0 auto;
+        opacity: 0.95;
+        line-height: 1.7;
+      }
+
+      /* Sidebar - Modern Slide-out Panel */
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 320px;
+        background: white;
+        border-right: 1px solid var(--gray-200);
+        padding: var(--space-xl);
+        overflow-y: auto;
+        z-index: 90;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: var(--shadow-xl);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-toggle {
+        position: fixed;
+        left: var(--space-lg);
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 95;
+        background: white;
+        border: 1px solid var(--gray-200);
+        padding: var(--space-md);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        box-shadow: var(--shadow-md);
+        transition: var(--transition);
+      }
+
+      .sidebar-toggle:hover {
+        background: var(--gray-50);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .filter-group {
+        margin-bottom: var(--space-xl);
+      }
+
+      .filter-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: var(--space-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      /* Custom Select with Modern Design */
+      .custom-select {
+        position: relative;
+        width: 100%;
+      }
+
+      .select-button {
+        width: 100%;
+        padding: var(--space-md);
+        background: white;
+        border: 2px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.875rem;
+      }
+
+      .select-button:hover {
+        border-color: var(--primary);
+      }
+
+      /* Metric Cards - Bento Box Grid */
+      .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-lg);
+        margin: var(--space-xl) 0;
+      }
+
+      .metric-card {
+        background: white;
+        padding: var(--space-lg);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--gray-200);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .metric-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-color, var(--primary));
+        transition: width 0.3s;
+      }
+
+      .metric-card:hover {
+        border-color: var(--accent-color, var(--primary));
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+      }
+
+      .metric-card:hover::before {
+        width: 8px;
+      }
+
+      .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        margin-bottom: var(--space-xs);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .metric-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      /* Tabs - Modern Pill Design */
+      .tabs {
+        display: flex;
+        gap: var(--space-sm);
+        padding: var(--space-md);
+        background: var(--gray-100);
+        border-radius: var(--radius-xl);
+        overflow-x: auto;
+        margin: var(--space-xl) 0;
+      }
+
+      .tab {
+        padding: var(--space-md) var(--space-lg);
+        border-radius: var(--radius-lg);
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        color: var(--gray-600);
+        transition: var(--transition);
+        white-space: nowrap;
+        font-size: 0.875rem;
+      }
+
+      .tab:hover {
+        color: var(--gray-900);
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .tab.active {
+        background: white;
+        color: var(--gray-900);
+        box-shadow: var(--shadow-sm);
+      }
+
+      /* Content Sections - Modern Card Design */
+      .section {
+        background: white;
+        border-radius: var(--radius-xl);
+        padding: var(--space-xl);
+        margin-bottom: var(--space-xl);
+        border: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-lg);
+        padding-bottom: var(--space-lg);
+        border-bottom: 2px solid var(--gray-100);
+      }
+
+      .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--gray-900);
+        letter-spacing: -0.02em;
+      }
+
+      /* Chart Container - Modern Visualization */
+      .chart-container {
+        position: relative;
+        width: 100%;
+        height: 400px;
+        background: var(--gray-50);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed var(--gray-200);
+        color: var(--gray-400);
+        font-size: 0.875rem;
+      }
+
+      /* Data Table - Modern Design */
+      .table-container {
+        overflow-x: auto;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--gray-200);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+      }
+
+      thead {
+        background: var(--gray-50);
+      }
+
+      th {
+        padding: var(--space-md);
+        text-align: left;
+        font-weight: 600;
+        color: var(--gray-700);
+        border-bottom: 2px solid var(--gray-200);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+      }
+
+      td {
+        padding: var(--space-md);
+        border-bottom: 1px solid var(--gray-100);
+        color: var(--gray-800);
+      }
+
+      tbody tr {
+        transition: var(--transition);
+      }
+
+      tbody tr:hover {
+        background: var(--gray-50);
+      }
+
+      /* Buttons - Modern Gradient Style */
+      .btn {
+        padding: var(--space-md) var(--space-lg);
+        border-radius: var(--radius-md);
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: var(--transition);
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        text-decoration: none;
+      }
+
+      .btn-primary {
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--accent) 100%
+        );
+        color: white;
+        box-shadow: var(--shadow);
+      }
+
+      .btn-primary:hover {
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+      }
+
+      .btn-secondary {
+        background: white;
+        color: var(--gray-700);
+        border: 2px solid var(--gray-200);
+      }
+
+      .btn-secondary:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+      }
+
+      /* Search Bar - Modern Design */
+      .search-container {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: var(--space-md) var(--space-md) var(--space-md) 3rem;
+        border: 2px solid var(--gray-200);
+        border-radius: var(--radius-xl);
+        font-size: 0.875rem;
+        transition: var(--transition);
+        background: white;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: var(--space-md);
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-400);
+      }
+
+      /* Stats Grid - Bento Style */
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--space-lg);
+        margin: var(--space-xl) 0;
+      }
+
+      .stat-card {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.9) 0%,
+          rgba(255, 255, 255, 0.7) 100%
+        );
+        backdrop-filter: blur(10px);
+        padding: var(--space-xl);
+        border-radius: var(--radius-xl);
+        border: 1px solid var(--gray-200);
+        transition: var(--transition);
+      }
+
+      .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+      }
+
+      /* Badge - Modern Pill Design */
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: var(--space-xs) var(--space-md);
+        border-radius: var(--radius-xl);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .badge-primary {
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--primary);
+      }
+
+      .badge-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--secondary);
+      }
+
+      .badge-warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+      }
+
+      /* Loading State - Modern Skeleton */
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          var(--gray-200) 25%,
+          var(--gray-100) 50%,
+          var(--gray-200) 75%
+        );
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: var(--radius-md);
+      }
+
+      @keyframes loading {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      /* Responsive Grid System */
+      .grid {
+        display: grid;
+        gap: var(--space-lg);
+      }
+
+      .grid-2 {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      }
+
+      /* Info Box - Modern Alert Style */
+      .info-box {
+        padding: var(--space-lg);
+        border-radius: var(--radius-lg);
+        border-left: 4px solid var(--primary);
+        background: rgba(37, 99, 235, 0.05);
+        margin: var(--space-lg) 0;
+      }
+
+      .info-box-title {
+        font-weight: 600;
+        color: var(--primary);
+        margin-bottom: var(--space-sm);
+      }
+
+      /* Footer */
+      .footer {
+        background: white;
+        border-top: 1px solid var(--gray-200);
+        padding: var(--space-2xl) 0;
+        margin-top: var(--space-2xl);
+      }
+
+      .footer-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-xl);
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .fade-in {
+        animation: fadeIn 0.6s ease-out;
+      }
+
+      /* Scrollbar Styling */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: var(--gray-100);
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: var(--radius-xl);
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-400);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 280px;
+        }
+
+        .header-content {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .tabs {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+        }
+
+        .metrics-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      /* Dark Mode Support */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --gray-50: #111827;
+          --gray-100: #1f2937;
+          --gray-200: #374151;
+          --gray-900: #f9fafb;
+        }
+      }
+
+      /* Utility Classes */
+      .text-center {
+        text-align: center;
+      }
+      .text-right {
+        text-align: right;
+      }
+      .mb-sm {
+        margin-bottom: var(--space-sm);
+      }
+      .mb-md {
+        margin-bottom: var(--space-md);
+      }
+      .mb-lg {
+        margin-bottom: var(--space-lg);
+      }
+      .mt-sm {
+        margin-top: var(--space-sm);
+      }
+      .mt-md {
+        margin-top: var(--space-md);
+      }
+      .mt-lg {
+        margin-top: var(--space-lg);
+      }
+      .flex {
+        display: flex;
+      }
+      .items-center {
+        align-items: center;
+      }
+      .justify-between {
+        justify-content: space-between;
+      }
+      .gap-md {
+        gap: var(--space-md);
+      }
+      .gap-lg {
+        gap: var(--space-lg);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <div class="header-content">
+          <div class="logo">📊 Digital Economy Dashboard</div>
+          <div class="header-actions">
+            <div class="search-container">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                class="search-input"
+                placeholder="Search initiatives, companies..."
+              />
+            </div>
+            <button class="btn btn-primary">Export Data</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sidebar Toggle -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()">☰ Filters</button>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <h3 style="margin-bottom: var(--space-lg); font-size: 1.25rem">
+        🔍 Filters
+      </h3>
+
+      <div class="filter-group">
+        <label class="filter-label">Companies</label>
+        <div class="custom-select">
+          <button class="select-button">
+            <span>All Companies (1,345)</span>
+            <span>▼</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Years</label>
+        <div class="custom-select">
+          <button class="select-button">
+            <span>All Years</span>
+            <span>▼</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Sectors</label>
+        <div class="custom-select">
+          <button class="select-button">
+            <span>All Sectors</span>
+            <span>▼</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Categories</label>
+        <div class="custom-select">
+          <button class="select-button">
+            <span>All Categories</span>
+            <span>▼</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label class="filter-label">Maturity Level</label>
+        <div class="custom-select">
+          <button class="select-button">
+            <span>All Levels</span>
+            <span>▼</span>
+          </button>
+        </div>
+      </div>
+
+      <button
+        class="btn btn-primary"
+        style="width: 100%; margin-top: var(--space-lg)"
+      >
+        Apply Filters
+      </button>
+      <button
+        class="btn btn-secondary"
+        style="width: 100%; margin-top: var(--space-sm)"
+      >
+        Reset
+      </button>
+    </aside>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <div class="hero-content fade-in">
+          <h1>Digital Economy Initiatives Research Dashboard</h1>
+          <p>
+            A comprehensive analytical platform for examining corporate digital
+            transformation strategies, technology adoption patterns, and policy
+            implications across Malaysian publicly-listed companies.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="container" style="padding-top: var(--space-xl)">
+      <!-- Metric Cards -->
+      <div class="metrics-grid fade-in">
+        <div class="metric-card" style="--accent-color: #2563eb">
+          <div class="metric-value">11,231</div>
+          <div class="metric-label">Total Initiatives</div>
+        </div>
+        <div class="metric-card" style="--accent-color: #10b981">
+          <div class="metric-value">1,345</div>
+          <div class="metric-label">Companies</div>
+        </div>
+        <div class="metric-card" style="--accent-color: #f59e0b">
+          <div class="metric-value">42</div>
+          <div class="metric-label">Sectors</div>
+        </div>
+        <div class="metric-card" style="--accent-color: #8b5cf6">
+          <div class="metric-value">15</div>
+          <div class="metric-label">Categories</div>
+        </div>
+        <div class="metric-card" style="--accent-color: #ec4899">
+          <div class="metric-value">3,847</div>
+          <div class="metric-label">Technologies</div>
+        </div>
+      </div>
+
+      <!-- Quick Insights -->
+      <section class="section fade-in">
+        <div class="section-header">
+          <h2 class="section-title">📊 Research Summary & Key Findings</h2>
+        </div>
+        <div class="grid grid-2">
+          <div class="info-box">
+            <div class="info-box-title">🏆 Most Active Organization</div>
+            <p>
+              <strong>Telekom Malaysia Berhad</strong> leads with 287 documented
+              digital initiatives, demonstrating sustained commitment to digital
+              transformation across multiple reporting periods.
+            </p>
+          </div>
+          <div class="info-box">
+            <div class="info-box-title">🏭 Leading Sector</div>
+            <p>
+              <strong>Financial Services</strong> demonstrates highest
+              initiative concentration with 2,456 initiatives, reflecting rapid
+              digitalization in banking and fintech.
+            </p>
+          </div>
+        </div>
+        <div class="grid grid-2" style="margin-top: var(--space-lg)">
+          <div class="info-box" style="border-left-color: var(--secondary)">
+            <div class="info-box-title" style="color: var(--secondary)">
+              🎯 Dominant Initiative Type
+            </div>
+            <p>
+              <strong>Process Automation</strong> represents 34% of all
+              initiatives (3,819 cases), indicating organizational focus on
+              operational efficiency improvements.
+            </p>
+          </div>
+          <div class="info-box" style="border-left-color: var(--warning)">
+            <div class="info-box-title" style="color: var(--warning)">
+              📅 Peak Activity Year
+            </div>
+            <p>
+              <strong>2023</strong> recorded highest initiative disclosure
+              (4,123 initiatives), suggesting heightened digital transformation
+              urgency post-pandemic.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabs -->
+      <div class="tabs fade-in">
+        <button class="tab active" onclick="switchTab(0)">
+          🔍 Query & Analysis
+        </button>
+        <button class="tab" onclick="switchTab(1)">📊 Executive Summary</button>
+        <button class="tab" onclick="switchTab(2)">🏭 Sectoral Analysis</button>
+        <button class="tab" onclick="switchTab(3)">
+          💻 Technology Patterns
+        </button>
+        <button class="tab" onclick="switchTab(4)">📈 PLCT Framework</button>
+        <button class="tab" onclick="switchTab(5)">
+          📉 Advanced Analytics
+        </button>
+        <button class="tab" onclick="switchTab(6)">
+          ⚖️ Comparative Analysis
+        </button>
+        <button class="tab" onclick="switchTab(7)">🧮 ROI Estimator</button>
+        <button class="tab" onclick="switchTab(8)">📋 Research Data</button>
+      </div>
+
+      <!-- Tab Content - Query & Analysis -->
+      <section class="section fade-in" id="tab-0">
+        <div class="section-header">
+          <h2 class="section-title">🔍 Natural Language Database Query</h2>
+        </div>
+        <div class="info-box">
+          <div class="info-box-title">About This Tool</div>
+          <p>
+            Use natural language to query the research database. The AI will
+            translate your question into SQL and return structured results with
+            interpretive analysis.
+          </p>
+        </div>
+        <div style="margin-top: var(--space-lg)">
+          <label class="filter-label">Enter your question:</label>
+          <textarea
+            style="
+              width: 100%;
+              padding: var(--space-md);
+              border: 2px solid var(--gray-200);
+              border-radius: var(--radius-md);
+              font-family: var(--font-sans);
+              min-height: 100px;
+              resize: vertical;
+            "
+            placeholder="E.g., Which companies are investing in AI and automation?"
+          ></textarea>
+          <div
+            style="
+              margin-top: var(--space-md);
+              display: flex;
+              gap: var(--space-md);
+            "
+          >
+            <button class="btn btn-primary">🔍 Query</button>
+            <button class="btn btn-secondary">🗑️ Clear History</button>
+          </div>
+        </div>
+        <div class="chart-container" style="margin-top: var(--space-xl)">
+          Query results will appear here after submission
+        </div>
+      </section>
+
+      <!-- Tab Content - Executive Summary -->
+      <section class="section fade-in" id="tab-1" style="display: none">
+        <div class="section-header">
+          <h2 class="section-title">📊 Executive Summary</h2>
+        </div>
+        <div class="grid grid-2">
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">
+              Leading Organizations by Digital Activity
+            </h3>
+            <div class="chart-container">Interactive bar chart placeholder</div>
+          </div>
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">
+              Digital Maturity Assessment
+            </h3>
+            <div class="chart-container">Interactive pie chart placeholder</div>
+          </div>
+        </div>
+        <div style="margin-top: var(--space-xl)">
+          <h3 style="margin-bottom: var(--space-md)">
+            📅 Temporal Patterns in Digital Transformation
+          </h3>
+          <div class="chart-container">Interactive line chart placeholder</div>
+        </div>
+      </section>
+
+      <!-- Tab Content - Sectoral Analysis -->
+      <section class="section fade-in" id="tab-2" style="display: none">
+        <div class="section-header">
+          <h2 class="section-title">🏭 Sectoral & Categorical Analysis</h2>
+        </div>
+        <div class="grid grid-2">
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">
+              Initiative Categories
+            </h3>
+            <div class="chart-container">Category distribution chart</div>
+          </div>
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">Innovation Levels</h3>
+            <div class="chart-container">Innovation level distribution</div>
+          </div>
+        </div>
+        <div style="margin-top: var(--space-xl)">
+          <h3 style="margin-bottom: var(--space-md)">
+            📊 Cross-Sectional Analysis
+          </h3>
+          <div class="chart-container">Heatmap placeholder</div>
+        </div>
+      </section>
+
+      <!-- Tab Content - Technology Patterns -->
+      <section class="section fade-in" id="tab-3" style="display: none">
+        <div class="section-header">
+          <h2 class="section-title">💻 Technology Adoption Patterns</h2>
+        </div>
+        <div class="grid grid-2">
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">Top Technologies</h3>
+            <div class="chart-container">Technology bar chart</div>
+          </div>
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">
+              Technology Distribution
+            </h3>
+            <div class="chart-container">Technology pie chart</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab Content - PLCT Framework -->
+      <section class="section fade-in" id="tab-4" style="display: none">
+        <div class="section-header">
+          <h2 class="section-title">📈 PLCT Framework Scoring Analysis</h2>
+        </div>
+        <div class="info-box">
+          <div class="info-box-title">PLCT Scoring Framework</div>
+          <p>Quantitative assessment across four dimensions (0-100 scale):</p>
+          <ul
+            style="margin-top: var(--space-md); padding-left: var(--space-lg)"
+          >
+            <li>
+              <strong>Customer Experience (CX):</strong> Digital initiatives
+              improving customer interactions
+            </li>
+            <li>
+              <strong>People Empowerment (PE):</strong> Workforce development
+              and capability building
+            </li>
+            <li>
+              <strong>Operational Efficiency (OE):</strong> Process optimization
+              and automation
+            </li>
+            <li>
+              <strong>New Business Models (BM):</strong> Innovation in revenue
+              streams
+            </li>
+          </ul>
+        </div>
+        <div class="metrics-grid" style="margin-top: var(--space-xl)">
+          <div class="metric-card" style="--accent-color: #2563eb">
+            <div class="metric-value">72.5</div>
+            <div class="metric-label">Avg CX Score</div>
+          </div>
+          <div class="metric-card" style="--accent-color: #10b981">
+            <div class="metric-value">68.3</div>
+            <div class="metric-label">Avg PE Score</div>
+          </div>
+          <div class="metric-card" style="--accent-color: #f59e0b">
+            <div class="metric-value">81.7</div>
+            <div class="metric-label">Avg OE Score</div>
+          </div>
+          <div class="metric-card" style="--accent-color: #8b5cf6">
+            <div class="metric-value">65.2</div>
+            <div class="metric-label">Avg BM Score</div>
+          </div>
+        </div>
+        <div class="chart-container" style="margin-top: var(--space-xl)">
+          Radar chart placeholder
+        </div>
+      </section>
+
+      <!-- Tab Content - Advanced Analytics -->
+      <section class="section fade-in" id="tab-5" style="display: none">
+        <div class="section-header">
+          <h2 class="section-title">
+            📉 Advanced Analytics & Statistical Visualizations
+          </h2>
+        </div>
+        <div
+          style="
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+          "
+        >
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-sm);
+              cursor: pointer;
+            "
+          >
+            <input type="checkbox" checked /> 🔥 Correlation Heatmap
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-sm);
+              cursor: pointer;
+            "
+          >
+            <input type="checkbox" /> 📦 Box Plot Distribution
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-sm);
+              cursor: pointer;
+            "
+          >
+            <input type="checkbox" /> 🎻 Violin Plot
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-sm);
+              cursor: pointer;
+            "
+          >
+            <input type="checkbox" /> 🎯 PLCT Radar Chart
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-sm);
+              cursor: pointer;
+            "
+          >
+            <input type="checkbox" /> 📈 Timeline Evolution
+          </label>
+          <label
+            style="
+              display: flex;
+              align-items: center;
+              gap: var(--space-sm);
+              cursor: pointer;
+            "
+          >
+            <input type="checkbox" /> 💭 Bubble Chart
+          </label>
+        </div>
+        <div class="chart-container">
+          Selected visualizations will appear here
+        </div>
+      </section>
+
+      <!-- Tab Content - Comparative Analysis -->
+      <section class="section fade-in" id="tab-6" style="display: none">
+        <div class="section-header">
+          <h2 class="section-title">⚖️ Comparative Analysis</h2>
+        </div>
+        <div class="grid grid-2" style="margin-bottom: var(--space-xl)">
+          <div>
+            <label class="filter-label">Select Company A</label>
+            <div class="custom-select">
+              <button class="select-button">
+                <span>Telekom Malaysia Berhad</span>
+                <span>▼</span>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="filter-label">Select Company B</label>
+            <div class="custom-select">
+              <button class="select-button">
+                <span>Maybank</span>
+                <span>▼</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="chart-container">Comparative analysis charts</div>
+      </section>
+
+      <!-- Tab Content - ROI Estimator -->
+      <section class="section fade-in" id="tab-7" style="display: none">
+        <div class="section-header">
+          <h2 class="section-title">🧮 Investment Return Estimator</h2>
+        </div>
+        <div class="info-box">
+          <div class="info-box-title">Methodological Note</div>
+          <p>
+            This calculator provides hypothetical ROI projections based on
+            user-defined parameters. Results should be interpreted as
+            illustrative scenarios rather than financial forecasts.
+          </p>
+        </div>
+        <div class="grid grid-2" style="margin-top: var(--space-xl)">
+          <div>
+            <label class="filter-label">Initial Investment (RM)</label>
+            <input
+              type="number"
+              style="
+                width: 100%;
+                padding: var(--space-md);
+                border: 2px solid var(--gray-200);
+                border-radius: var(--radius-md);
+              "
+              value="1000000"
+            />
+          </div>
+          <div>
+            <label class="filter-label">Expected Annual ROI (%)</label>
+            <input
+              type="number"
+              style="
+                width: 100%;
+                padding: var(--space-md);
+                border: 2px solid var(--gray-200);
+                border-radius: var(--radius-md);
+              "
+              value="15"
+            />
+          </div>
+        </div>
+        <button class="btn btn-primary" style="margin-top: var(--space-lg)">
+          Calculate Projection
+        </button>
+        <div class="chart-container" style="margin-top: var(--space-xl)">
+          ROI projection chart
+        </div>
+      </section>
+
+      <!-- Tab Content - Research Data -->
+      <section class="section fade-in" id="tab-8" style="display: none">
+        <div class="section-header">
+          <h2 class="section-title">📋 Research Dataset</h2>
+          <button class="btn btn-primary">📥 Export CSV</button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Company</th>
+                <th>Sector</th>
+                <th>Year</th>
+                <th>Category</th>
+                <th>Description</th>
+                <th>Maturity</th>
+                <th>Investment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Telekom Malaysia</td>
+                <td>Telecommunications</td>
+                <td>2023</td>
+                <td>Cloud Migration</td>
+                <td>Enterprise cloud infrastructure deployment</td>
+                <td><span class="badge badge-success">Advanced</span></td>
+                <td>RM 45.2M</td>
+              </tr>
+              <tr>
+                <td>Maybank</td>
+                <td>Financial Services</td>
+                <td>2023</td>
+                <td>AI Implementation</td>
+                <td>AI-powered customer service chatbot</td>
+                <td><span class="badge badge-primary">Mature</span></td>
+                <td>RM 12.8M</td>
+              </tr>
+              <tr>
+                <td>PETRONAS</td>
+                <td>Oil & Gas</td>
+                <td>2022</td>
+                <td>IoT Sensors</td>
+                <td>Industrial IoT for asset monitoring</td>
+                <td><span class="badge badge-warning">Developing</span></td>
+                <td>RM 67.5M</td>
+              </tr>
+              <tr>
+                <td>TNB</td>
+                <td>Utilities</td>
+                <td>2023</td>
+                <td>Smart Grid</td>
+                <td>Smart grid technology implementation</td>
+                <td><span class="badge badge-success">Advanced</span></td>
+                <td>RM 123.4M</td>
+              </tr>
+              <tr>
+                <td>CIMB</td>
+                <td>Financial Services</td>
+                <td>2022</td>
+                <td>Digital Banking</td>
+                <td>Mobile banking app enhancement</td>
+                <td><span class="badge badge-primary">Mature</span></td>
+                <td>RM 28.9M</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">About</h3>
+            <p style="color: var(--gray-600); font-size: 0.875rem">
+              Digital Economy Initiatives Research Dashboard - A comprehensive
+              platform for analyzing corporate digital transformation in
+              Malaysia.
+            </p>
+          </div>
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">Quick Links</h3>
+            <ul
+              style="
+                list-style: none;
+                color: var(--gray-600);
+                font-size: 0.875rem;
+              "
+            >
+              <li style="margin-bottom: var(--space-sm)">
+                <a
+                  href="#"
+                  style="color: var(--gray-600); text-decoration: none"
+                  >Documentation</a
+                >
+              </li>
+              <li style="margin-bottom: var(--space-sm)">
+                <a
+                  href="#"
+                  style="color: var(--gray-600); text-decoration: none"
+                  >API Reference</a
+                >
+              </li>
+              <li style="margin-bottom: var(--space-sm)">
+                <a
+                  href="#"
+                  style="color: var(--gray-600); text-decoration: none"
+                  >Data Sources</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="margin-bottom: var(--space-md)">Contact</h3>
+            <p style="color: var(--gray-600); font-size: 0.875rem">
+              Research queries: research@example.com<br />
+              Technical support: support@example.com
+            </p>
+          </div>
+        </div>
+        <div
+          style="
+            margin-top: var(--space-xl);
+            padding-top: var(--space-lg);
+            border-top: 1px solid var(--gray-200);
+            text-align: center;
+            color: var(--gray-500);
+            font-size: 0.875rem;
+          "
+        >
+          © 2025 Digital Economy Research Dashboard. All rights reserved.
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // API Base URL
+      const API_BASE_URL = "http://localhost:5000/api";
+
+      // Fetch and display metrics
+      async function loadMetrics() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/metrics`);
+          const data = await response.json();
+
+          // Update metric cards
+          document.querySelectorAll(".metric-value")[0].textContent =
+            data.total_initiatives.toLocaleString();
+          document.querySelectorAll(".metric-value")[1].textContent =
+            data.total_companies.toLocaleString();
+          document.querySelectorAll(".metric-value")[2].textContent =
+            data.total_sectors.toLocaleString();
+          document.querySelectorAll(".metric-value")[3].textContent =
+            data.total_categories.toLocaleString();
+          document.querySelectorAll(".metric-value")[4].textContent =
+            data.total_technologies.toLocaleString();
+        } catch (error) {
+          console.error("Error loading metrics:", error);
+        }
+      }
+
+      // Fetch and display quick insights
+      async function loadQuickInsights() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/quick-insights`);
+          const data = await response.json();
+
+          // Update insights boxes
+          if (data.top_company) {
+            const topCompanyBox = document.querySelector(".info-box p");
+            topCompanyBox.innerHTML = `<strong>${data.top_company.name}</strong> leads with ${data.top_company.count} documented digital initiatives, demonstrating sustained commitment to digital transformation across multiple reporting periods.`;
+          }
+
+          if (data.top_sector) {
+            const boxes = document.querySelectorAll(".info-box p");
+            boxes[1].innerHTML = `<strong>${data.top_sector.sector}</strong> demonstrates highest initiative concentration with ${data.top_sector.count} initiatives, reflecting rapid digitalization in this sector.`;
+          }
+
+          if (data.top_category) {
+            const boxes = document.querySelectorAll(".info-box p");
+            boxes[2].innerHTML = `<strong>${
+              data.top_category.category
+            }</strong> represents ${(
+              (data.top_category.count / data.top_company.count) *
+              100
+            ).toFixed(1)}% of initiatives (${
+              data.top_category.count
+            } cases), indicating organizational focus on this area.`;
+          }
+
+          if (data.peak_year) {
+            const boxes = document.querySelectorAll(".info-box p");
+            boxes[3].innerHTML = `<strong>${data.peak_year.report_year}</strong> recorded highest initiative disclosure (${data.peak_year.count} initiatives), suggesting heightened digital transformation urgency.`;
+          }
+        } catch (error) {
+          console.error("Error loading quick insights:", error);
+        }
+      }
+
+      // Fetch and display initiatives table
+      async function loadInitiativesTable() {
+        try {
+          const response = await fetch(`${API_BASE_URL}/initiatives?limit=50`);
+          const initiatives = await response.json();
+
+          const tbody = document.querySelector("tbody");
+          tbody.innerHTML = "";
+
+          initiatives.forEach((initiative) => {
+            const row = document.createElement("tr");
+
+            // Determine badge class based on maturity level
+            let badgeClass = "badge-primary";
+            if (initiative.digital_maturity_level) {
+              if (initiative.digital_maturity_level.includes("Advanced"))
+                badgeClass = "badge-success";
+              else if (initiative.digital_maturity_level.includes("Developing"))
+                badgeClass = "badge-warning";
+            }
+
+            row.innerHTML = `
+              <td>${initiative.company_name || "N/A"}</td>
+              <td>${initiative.company_sector || "N/A"}</td>
+              <td>${initiative.report_year || "N/A"}</td>
+              <td>${initiative.category || "N/A"}</td>
+              <td>${(initiative.description || "").substring(0, 60)}${
+              initiative.description && initiative.description.length > 60
+                ? "..."
+                : ""
+            }</td>
+              <td><span class="badge ${badgeClass}">${
+              initiative.digital_maturity_level || "N/A"
+            }</span></td>
+              <td>${initiative.investment_amount || "N/A"}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        } catch (error) {
+          console.error("Error loading initiatives:", error);
+        }
+      }
+
+      // Fetch and populate filters
+      async function loadFilters() {
+        try {
+          // Load companies
+          const companiesRes = await fetch(`${API_BASE_URL}/companies`);
+          const companies = await companiesRes.json();
+
+          // Load sectors
+          const sectorsRes = await fetch(`${API_BASE_URL}/sectors`);
+          const sectors = await sectorsRes.json();
+
+          // Load categories
+          const categoriesRes = await fetch(`${API_BASE_URL}/categories`);
+          const categories = await categoriesRes.json();
+
+          // Update filter dropdowns
+          const filterGroups = document.querySelectorAll(".select-button span");
+          if (filterGroups[0])
+            filterGroups[0].textContent = `All Companies (${companies.length})`;
+          if (filterGroups[2])
+            filterGroups[2].textContent = `All Sectors (${sectors.length})`;
+          if (filterGroups[3])
+            filterGroups[3].textContent = `All Categories (${categories.length})`;
+        } catch (error) {
+          console.error("Error loading filters:", error);
+        }
+      }
+
+      // Initialize dashboard
+      async function initDashboard() {
+        console.log("Loading dashboard data...");
+        await loadMetrics();
+        await loadQuickInsights();
+        await loadFilters();
+        await loadInitiativesTable();
+        console.log("Dashboard loaded successfully!");
+      }
+
+      // Load data when page loads
+      window.addEventListener("DOMContentLoaded", initDashboard);
+
+      // Sidebar toggle
+      function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("open");
+      }
+
+      // Tab switching
+      function switchTab(index) {
+        // Hide all tabs
+        for (let i = 0; i <= 8; i++) {
+          const tab = document.getElementById(`tab-${i}`);
+          if (tab) tab.style.display = "none";
+        }
+
+        // Show selected tab
+        const selectedTab = document.getElementById(`tab-${index}`);
+        if (selectedTab) selectedTab.style.display = "block";
+
+        // Update active state
+        const tabs = document.querySelectorAll(".tab");
+        tabs.forEach((tab, i) => {
+          if (i === index) {
+            tab.classList.add("active");
+          } else {
+            tab.classList.remove("active");
+          }
+        });
+
+        // Load tab-specific data
+        if (index === 8) {
+          loadInitiativesTable();
+        }
+      }
+
+      // Close sidebar when clicking outside
+      document.addEventListener("click", function (event) {
+        const sidebar = document.getElementById("sidebar");
+        const toggle = document.querySelector(".sidebar-toggle");
+
+        if (!sidebar.contains(event.target) && !toggle.contains(event.target)) {
+          sidebar.classList.remove("open");
+        }
+      });
+
+      // Smooth scroll for anchors
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute("href"));
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        });
+      });
+
+      // Add loading state simulation
+      window.addEventListener("load", function () {
+        document.querySelectorAll(".skeleton").forEach((el) => {
+          setTimeout(() => {
+            el.classList.remove("skeleton");
+          }, 500);
+        });
+      });
+    </script>
+  </body>
+</html>
