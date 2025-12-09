@@ -472,26 +472,6 @@ def render_metric_cards(filtered_df):
 def render_quick_insights(filtered_df):
     """Display research summary with key findings"""
     
-    # Add export button before insights
-    col_export1, col_export2, col_export3 = st.columns([1, 1, 2])
-    with col_export1:
-        if st.button("📥 Export Filtered Data"):
-            csv_data = export_data_to_csv(filtered_df, "ide_research_export.csv")
-            st.download_button(
-                label="Download CSV",
-                data=csv_data,
-                file_name=f"ide_research_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
-                mime="text/csv"
-            )
-    with col_export2:
-        if st.button("📄 Citation Info"):
-            st.session_state.show_citation = True
-    
-    if st.session_state.get('show_citation', False):
-        st.markdown(generate_citation_info())
-        if st.button("Close Citation Info"):
-            st.session_state.show_citation = False
-    
     with st.expander("📊 Research Summary & Key Findings", expanded=True):
         if not filtered_df.empty:
             try:
@@ -1670,6 +1650,26 @@ def main():
     
     st.markdown("---")
     render_quick_insights(filtered_df)
+    
+    # Add export and citation buttons
+    st.markdown("---")
+    col_export1, col_export2, col_export3 = st.columns([1, 1, 2])
+    with col_export1:
+        csv_data = export_data_to_csv(filtered_df, "ide_research_export.csv")
+        st.download_button(
+            label="📥 Export Filtered Data (CSV)",
+            data=csv_data,
+            file_name=f"ide_research_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
+            mime="text/csv"
+        )
+    with col_export2:
+        if st.button("📄 Show Citation Info"):
+            st.session_state.show_citation = not st.session_state.get('show_citation', False)
+    
+    if st.session_state.get('show_citation', False):
+        st.info(generate_citation_info())
+    
+    st.markdown("---")
 
     # Analytical tabs with clear academic organization
     tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
