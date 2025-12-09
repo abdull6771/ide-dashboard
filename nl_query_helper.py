@@ -2,7 +2,7 @@ import os
 import logging
 from dotenv import load_dotenv
 import google.generativeai as genai
-import mysql.connector
+import pymysql
 import pandas as pd
 
 # Setup logging
@@ -170,7 +170,7 @@ SQL QUERY:"""
             pandas DataFrame with results
         """
         try:
-            conn = mysql.connector.connect(**self.db_config)
+            conn = pymysql.connect(**self.db_config)
             df = pd.read_sql(sql, conn)
             conn.close()
             logging.info(f"Query returned {len(df)} rows")
