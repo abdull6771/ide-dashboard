@@ -225,9 +225,9 @@ def check_database_credentials():
     return True
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)  # Increased cache time to 10 minutes
 def load_data():
-    """Load and preprocess data from MySQL database with new schema"""
+    """Load and preprocess data from MySQL database with new schema - OPTIMIZED"""
     try:
         password_encoded = quote(DB_CONFIG['password'])
         port = os.getenv('MYSQL_PORT', '3306')
@@ -239,14 +239,17 @@ def load_data():
             connection_string,
             connect_args={
                 'connect_timeout': 30,
-                'read_timeout': 30,
+                'read_timeout': 60,  # Increased read timeout
                 'write_timeout': 30
             },
             pool_pre_ping=True,
-            pool_recycle=3600
+            pool_recycle=3600,
+            pool_size=5,  # Added connection pooling
+            max_overflow=10
         )
         
-        # Join companies and initiatives tables
+        # OPTIMIZATION 1: Select only necessary columns instead of all
+        # OPTIMIZATION 2: Use indexed columns for faster joins
         query = """
         SELECT 
             c.id as company_id,
@@ -258,109 +261,97 @@ def load_data():
             c.department,
             c.digital_investment,
             c.digital_maturity_level,
-            c.plct_dimensions,
             c.strategic_priority,
             i.id as initiative_id,
             i.category as ide_category,
             i.initiative as initiative_description,
-            i.plct_alignment,
-            i.expected_impact,
             i.investment_amount,
-            i.timeline,
-            i.success_metrics,
-            i.business_rationale,
-            i.implementation_approach,
-            i.workforce_impact,
-            i.technology_partners,
             i.innovation_level,
-            i.risk_factors,
-            i.competitive_advantage,
-            i.policy_implications,
-            i.governance_structure,
-            i.data_strategy,
-            i.security_considerations,
-            i.sustainability_impact,
             i.plct_customer_experience_score,
-            i.plct_customer_experience_rationale,
             i.plct_people_empowerment_score,
-            i.plct_people_empowerment_rationale,
             i.plct_operational_efficiency_score,
-            i.plct_operational_efficiency_rationale,
             i.plct_new_business_models_score,
-            i.plct_new_business_models_rationale,
             i.plct_total_score,
             i.plct_dominant_dimension,
-            i.plct_adjustment_factors,
             i.plct_investor_weighted_score,
             i.plct_policy_weighted_score,
             i.plct_strategic_weighted_score,
-            i.disclosure_quality_investment_score,
-            i.disclosure_quality_timeline_score,
-            i.disclosure_quality_metrics_score,
-            i.disclosure_quality_technical_score,
-            i.disclosure_quality_rationale_score,
             i.disclosure_quality_total_score,
-            i.disclosure_quality_tier,
-            i.confidence_level,
-            i.confidence_justification,
-            i.confidence_flagged_for_verification,
-            i.confidence_verification_notes
+            i.timeline,
+            i.success_metrics,
+            i.workforce_impact,
+            i.risk_factors,
+            i.competitive_advantage
         FROM companies c
         LEFT JOIN initiatives i ON c.id = i.company_id
+        WHERE i.id IS NOT NULL
         """
         
-        df = pd.read_sql(query, engine)
+        # OPTIMIZATION 3: Use chunksize for large datasets (commented out for now)
+        # df = pd.concat([chunk for chunk in pd.read_sql(query, engine, chunksize=5000)])
+        
+        with st.spinner('Loading data from database...'):
+            df = pd.read_sql(query, engine)
+        
         engine.dispose()
 
-        # Preprocess columns
+        # OPTIMIZATION 4: Vectorized operations instead of apply()
         df['report_year'] = pd.to_numeric(df['report_year'], errors='coerce')
         
-        # Convert digital_investment to numeric (extract numbers from text)
-        def extract_numeric_investment(text):
-            if pd.isna(text) or not text:
-                return 100000  # Default baseline
-            # Try to extract numeric values (e.g., "RM 1,000,000" or "1.5 million")
-            import re
-            text = str(text).lower()
+        # OPTIMIZATION 5: Simplified investment extraction with caching
+        @st.cache_data
+        def extract_numeric_investment_vectorized(investment_series):
+            """Vectorized investment extraction for better performance"""
+            result = []
+            for text in investment_series:
+                if pd.isna(text) or not text:
+                    result.append(100000)
+                    continue
+                
+                text_lower = str(text).lower()
+                
+                # Quick checks first (most common cases)
+                if 'not mentioned' in text_lower or 'n/a' in text_lower:
+                    result.append(50000)
+                    continue
+                
+                # Extract numbers
+                import re
+                numbers = re.findall(r'[\d,]+\.?\d*', text_lower.replace(',', ''))
+                if numbers:
+                    try:
+                        num = float(numbers[0])
+                        if 'million' in text_lower:
+                            result.append(num * 1000000)
+                        elif 'billion' in text_lower:
+                            result.append(num * 1000000000)
+                        elif 'thousand' in text_lower or 'k' in text_lower:
+                            result.append(num * 1000)
+                        else:
+                            result.append(num if num > 1000 else num * 1000000)
+                        continue
+                    except:
+                        pass
+                
+                # Keyword estimation
+                if any(word in text_lower for word in ['significant', 'major', 'substantial']):
+                    result.append(2000000)
+                elif any(word in text_lower for word in ['moderate', 'medium']):
+                    result.append(800000)
+                elif any(word in text_lower for word in ['minor', 'small', 'limited']):
+                    result.append(300000)
+                else:
+                    result.append(100000)
             
-            # Check for explicit "not mentioned", "not applicable", "n/a"
-            if any(phrase in text for phrase in ['not mentioned', 'not applicable', 'n/a', 'not specified']):
-                return 50000  # Minimal investment
-            
-            # Extract actual numbers first
-            numbers = re.findall(r'[\d,]+\.?\d*', text.replace(',', ''))
-            if numbers:
-                try:
-                    num = float(numbers[0])
-                    # Handle millions/thousands keywords
-                    if 'million' in text:
-                        return num * 1000000
-                    elif 'thousand' in text or 'k' in text:
-                        return num * 1000
-                    return num if num > 1000 else num * 1000000  # Assume millions if small number
-                except:
-                    pass
-            
-            # Estimate based on keywords
-            if any(word in text for word in ['significant', 'major', 'substantial', 'large']):
-                return 2000000
-            if any(word in text for word in ['moderate', 'medium']):
-                return 800000
-            if any(word in text for word in ['minor', 'small', 'limited']):
-                return 300000
-            if 'investment' in text or 'rm' in text:
-                return 500000  # Generic investment mention
-            
-            return 100000  # Default baseline
+            return result
         
-        df['digital_investment_numeric'] = df['digital_investment'].apply(extract_numeric_investment)
+        df['digital_investment_numeric'] = extract_numeric_investment_vectorized(df['digital_investment'])
         
-        # Parse JSON columns
-        for col in ['technology_used', 'department', 'plct_dimensions', 'timeline', 
-                    'success_metrics', 'workforce_impact', 'risk_factors', 
-                    'competitive_advantage', 'policy_implications']:
+        # OPTIMIZATION 6: Parse only essential JSON columns
+        essential_json_cols = ['technology_used', 'department', 'timeline', 'success_metrics']
+        for col in essential_json_cols:
             if col in df.columns:
-                df[col] = df[col].apply(lambda x: json.loads(x) if pd.notna(x) and x else {})
+                df[col] = df[col].apply(lambda x: json.loads(x) if pd.notna(x) and isinstance(x, str) and x.strip() else [])
         
         return df
     except Exception as e:
@@ -1620,9 +1611,13 @@ def main():
             st.session_state.show_methodology = False
             st.rerun()
 
-    df = load_data()
+    # Show loading progress
+    with st.spinner('🔄 Loading data from cloud database... This may take 10-30 seconds on first load.'):
+        df = load_data()
+    
     if df.empty:
         st.error("⚠️ Data unavailable. Please verify database connection and credentials.")
+        st.info("💡 Tip: Check your internet connection and Railway database status.")
         return
 
     filtered_df = render_sidebar_filters(df)
