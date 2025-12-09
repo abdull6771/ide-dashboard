@@ -1383,8 +1383,11 @@
     </footer>
 
     <script>
-      // API Base URL
-      const API_BASE_URL = "http://localhost:5000/api";
+      // API Base URL - automatically detects production or local
+      const API_BASE_URL =
+        window.location.hostname === "localhost"
+          ? "http://localhost:5000/api"
+          : "https://YOUR_RAILWAY_API_URL/api"; // Will update after Railway deployment
 
       // Fetch and display metrics
       async function loadMetrics() {

@@ -8,7 +8,8 @@ import json
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend access
+# Enable CORS for all origins (adjust in production for specific domains)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Database configuration
 DB_CONFIG = {
@@ -411,4 +412,5 @@ def health_check():
         return jsonify({'status': 'unhealthy', 'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
