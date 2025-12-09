@@ -37,16 +37,18 @@ git push -u origin main
 
 ## Step 3: Add Secrets (IMPORTANT!)
 
-In the "Secrets" section, paste:
+In the "Secrets" section, paste your credentials in this format:
 
 ```toml
-MYSQL_HOST = "centerbeam.proxy.rlwy.net"
-MYSQL_PORT = "22865"
-MYSQL_USER = "root"
-MYSQL_PASSWORD = "muNxavWmbDYZgFlrFmSwbaXZANXMmIoJ"
-MYSQL_DATABASE = "railway"
-GOOGLE_API_KEY = "AIzaSyDSn1yQLGLSnbxUpkUBIxfCGoKEbBruSWA"
+MYSQL_HOST = "your-railway-host.rlwy.net"
+MYSQL_PORT = "your-port"
+MYSQL_USER = "your-username"
+MYSQL_PASSWORD = "your-password"
+MYSQL_DATABASE = "your-database"
+GOOGLE_API_KEY = "your-google-api-key"
 ```
+
+**⚠️ NEVER commit these values to Git! They should only be added in Streamlit Cloud's secrets manager.**
 
 ## Step 4: Deploy
 
