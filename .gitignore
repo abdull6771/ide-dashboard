@@ -43,3 +43,7 @@ streamlit.log
 *.tmp
 *.bak
 *.backup
+
+# Documentation (except README.md)
+*.md
+!README.md
