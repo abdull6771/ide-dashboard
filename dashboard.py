@@ -12,7 +12,6 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from urllib.parse import quote
 import google.generativeai as genai
-import chromadb
 from nl_query_helper import RAGQueryHelper
 
 # Fix plotly orjson compatibility issue
