@@ -1545,7 +1545,7 @@ def render_footer(df, filtered_df):
 
 
 def main():
-    """Main application entry point"""
+    """Main application entry point - Clean version without research_enhancements"""
     # Page configuration - must be first Streamlit command
     st.set_page_config(
         page_title="Digital Economy Research Dashboard",
@@ -1555,12 +1555,6 @@ def main():
     )
 
     # Initialize session state variables BEFORE any other operations
-    if 'show_citation' not in st.session_state:
-        st.session_state.show_citation = False
-    if 'show_methodology' not in st.session_state:
-        st.session_state.show_methodology = False
-    if 'show_stats' not in st.session_state:
-        st.session_state.show_stats = False
     if 'query_history' not in st.session_state:
         st.session_state.query_history = []
     if 'rag_helper' not in st.session_state:
