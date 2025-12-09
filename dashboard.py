@@ -1582,27 +1582,6 @@ def main():
         A comprehensive analytical platform for examining corporate digital transformation strategies, 
         technology adoption patterns, and policy implications across Malaysian publicly-listed companies.
     </p>''', unsafe_allow_html=True)
-    
-    # Add methodology and citation sections
-    col1, col2, col3 = st.columns([1, 1, 2])
-    with col1:
-        if st.button("📚 Citation & How to Cite"):
-            st.session_state.show_citation = True
-    with col2:
-        if st.button("🔬 Research Methodology"):
-            st.session_state.show_methodology = True
-    
-    if st.session_state.get('show_citation', False):
-        st.markdown(generate_citation_info())
-        if st.button("✖️ Close Citation"):
-            st.session_state.show_citation = False
-            st.rerun()
-    
-    if st.session_state.get('show_methodology', False):
-        st.markdown(generate_methodology_section())
-        if st.button("✖️ Close Methodology"):
-            st.session_state.show_methodology = False
-            st.rerun()
 
     # Show loading progress
     with st.spinner('🔄 Loading data from cloud database... This may take 10-30 seconds on first load.'):
