@@ -18,6 +18,11 @@ from research_enhancements import (
     generate_methodology_section, render_data_quality_dashboard,
     render_statistical_summary
 )
+from advanced_visualizations import (
+    create_correlation_heatmap, create_scatter_matrix, create_box_plot_comparison,
+    create_sunburst_chart, create_treemap_investment, create_radar_chart,
+    create_timeline_evolution, create_bubble_chart, create_violin_plot
+)
 
 # Fix plotly orjson compatibility issue
 pio.json.config.default_engine = "json"
@@ -1473,6 +1478,100 @@ def render_data_table_tab(filtered_df):
         st.metric("Initiative Categories", filtered_df['ide_category'].nunique())
 
 
+def render_advanced_analytics_tab(filtered_df):
+    """Render advanced statistical visualizations for research"""
+    st.header("📉 Advanced Analytics & Statistical Visualizations")
+    st.caption("Publication-quality charts for rigorous quantitative analysis")
+    
+    if filtered_df.empty:
+        st.warning("⚠️ No data available for analysis")
+        return
+    
+    # Add visualization selector
+    st.markdown("### Select Visualization Type")
+    
+    viz_cols = st.columns(3)
+    with viz_cols[0]:
+        show_correlation = st.checkbox("🔥 Correlation Heatmap", value=True)
+        show_box = st.checkbox("📦 Box Plot Distribution", value=False)
+        show_violin = st.checkbox("🎻 Violin Plot", value=False)
+    with viz_cols[1]:
+        show_radar = st.checkbox("🎯 PLCT Radar Chart", value=False)
+        show_timeline = st.checkbox("📈 Timeline Evolution", value=False)
+        show_bubble = st.checkbox("💭 Bubble Chart", value=False)
+    with viz_cols[2]:
+        show_sunburst = st.checkbox("☀️ Sunburst Hierarchy", value=False)
+        show_treemap = st.checkbox("🗺️ Investment Treemap", value=False)
+        show_scatter = st.checkbox("📊 Scatter Matrix", value=False)
+    
+    st.markdown("---")
+    
+    # Render selected visualizations
+    if show_correlation:
+        create_correlation_heatmap(filtered_df)
+        st.markdown("---")
+    
+    if show_box:
+        create_box_plot_comparison(filtered_df)
+        st.markdown("---")
+    
+    if show_violin:
+        create_violin_plot(filtered_df)
+        st.markdown("---")
+    
+    if show_radar:
+        create_radar_chart(filtered_df)
+        st.markdown("---")
+    
+    if show_timeline:
+        create_timeline_evolution(filtered_df)
+        st.markdown("---")
+    
+    if show_bubble:
+        create_bubble_chart(filtered_df)
+        st.markdown("---")
+    
+    if show_sunburst:
+        create_sunburst_chart(filtered_df)
+        st.markdown("---")
+    
+    if show_treemap:
+        create_treemap_investment(filtered_df)
+        st.markdown("---")
+    
+    if show_scatter:
+        create_scatter_matrix(filtered_df)
+    
+    # Add research notes
+    with st.expander("📖 Research Guidelines for Advanced Analytics"):
+        st.markdown("""
+        **Using These Visualizations in Research:**
+        
+        1. **Correlation Heatmap**: Identify relationships between variables for hypothesis generation
+        2. **Box Plots**: Compare distributions across groups, identify outliers
+        3. **Violin Plots**: Examine distribution density and multimodality
+        4. **Radar Charts**: Profile comparison across multiple dimensions
+        5. **Timeline Evolution**: Temporal trend analysis and pattern recognition
+        6. **Bubble Charts**: Multi-dimensional exploration with 3-4 variables
+        7. **Sunburst**: Hierarchical data structure and proportion analysis
+        8. **Treemap**: Investment allocation and resource distribution
+        9. **Scatter Matrix**: Pairwise relationship exploration
+        
+        **Statistical Reporting:**
+        - Always report sample size (n)
+        - Include confidence intervals where applicable
+        - Note any data limitations or missing values
+        - Document filter settings used
+        - Reference statistical significance when testing hypotheses
+        
+        **Export Recommendations:**
+        - Save high-resolution images (right-click → Save)
+        - Export underlying data for verification
+        - Document visualization parameters
+        - Include in supplementary materials
+        """)
+
+
 def render_footer(df, filtered_df):
     """Render dashboard footer"""
     pass
@@ -1565,12 +1664,13 @@ def main():
     render_quick_insights(filtered_df)
 
     # Analytical tabs with clear academic organization
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
         "🔍 Query & Analysis",
         "📊 Executive Summary", 
         "🏭 Sectoral Analysis", 
         "💻 Technology Patterns", 
         "📈 PLCT Framework",
+        "📉 Advanced Analytics",
         "⚖️ Comparative Analysis", 
         "🧮 ROI Estimator", 
         "📋 Research Data"
@@ -1592,13 +1692,16 @@ def main():
         render_plct_framework_tab(filtered_df)
 
     with tab6:
+        render_advanced_analytics_tab(filtered_df)
+
+    with tab7:
         companies = sorted(df['company_name'].dropna().unique())
         render_comparison_tab(df, companies)
 
-    with tab7:
+    with tab8:
         render_roi_calculator_tab()
 
-    with tab8:
+    with tab9:
         render_data_table_tab(filtered_df)
 
     render_footer(df, filtered_df)
