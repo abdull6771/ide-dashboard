@@ -13,11 +13,6 @@ from sqlalchemy import create_engine
 from urllib.parse import quote
 import google.generativeai as genai
 from nl_query_helper import RAGQueryHelper
-from research_enhancements import (
-    export_data_to_csv, export_data_to_excel, generate_citation_info,
-    generate_methodology_section, render_data_quality_dashboard,
-    render_statistical_summary
-)
 from advanced_visualizations import (
     create_correlation_heatmap, create_scatter_matrix, create_box_plot_comparison,
     create_sunburst_chart, create_treemap_investment, create_radar_chart,
@@ -1596,58 +1591,7 @@ def main():
     
     render_metric_cards(filtered_df)
     st.markdown("---")
-    
-    # Add export and statistics section
-    col1, col2, col3, col4 = st.columns([1, 1, 1, 3])
-    with col1:
-        csv_data = export_data_to_csv(filtered_df)
-        st.download_button(
-            label="📥 Export CSV",
-            data=csv_data,
-            file_name=f"ide_research_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv",
-            help="Download filtered data as CSV"
-        )
-    with col2:
-        excel_data = export_data_to_excel(filtered_df)
-        st.download_button(
-            label="📊 Export Excel",
-            data=excel_data,
-            file_name=f"ide_research_{pd.Timestamp.now().strftime('%Y%m%d')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            help="Download with summary sheets"
-        )
-    with col3:
-        if st.button("📈 Show Statistics"):
-            st.session_state.show_stats = not st.session_state.get('show_stats', False)
-    
-    if st.session_state.get('show_stats', False):
-        with st.expander("📊 Comprehensive Statistical Summary", expanded=True):
-            render_statistical_summary(filtered_df)
-            st.markdown("---")
-            render_data_quality_dashboard(filtered_df)
-    
-    st.markdown("---")
     render_quick_insights(filtered_df)
-    
-    # Add export and citation buttons
-    st.markdown("---")
-    col_export1, col_export2, col_export3 = st.columns([1, 1, 2])
-    with col_export1:
-        csv_data = export_data_to_csv(filtered_df, "ide_research_export.csv")
-        st.download_button(
-            label="📥 Export Filtered Data (CSV)",
-            data=csv_data,
-            file_name=f"ide_research_{pd.Timestamp.now().strftime('%Y%m%d')}.csv",
-            mime="text/csv"
-        )
-    with col_export2:
-        if st.button("📄 Show Citation Info"):
-            st.session_state.show_citation = not st.session_state.get('show_citation', False)
-    
-    if st.session_state.get('show_citation', False):
-        st.info(generate_citation_info())
-    
     st.markdown("---")
 
     # Analytical tabs with clear academic organization
