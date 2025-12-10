@@ -674,8 +674,14 @@ app.index_string = '''
 </html>
 '''
 
-# Initialize data as None - will be fetched on first request
-metrics = None
+# Initialize data with defaults - will be fetched on first request
+metrics = {
+    'total_initiatives': 0, 
+    'total_companies': 0, 
+    'total_sectors': 0, 
+    'total_categories': 0, 
+    'total_technologies': 0
+}
 filter_options = {'sectors': [], 'categories': []}
 companies_list = []
 
@@ -683,12 +689,11 @@ def load_initial_data():
     """Load initial data on first request"""
     global metrics, filter_options, companies_list
     
-    if metrics is None:
+    if metrics['total_initiatives'] == 0:
         try:
             metrics = fetch_metrics()
         except:
-            metrics = {'total_initiatives': 0, 'total_companies': 0, 'total_sectors': 0, 
-                      'total_categories': 0, 'total_technologies': 0}
+            pass
     
     if not filter_options['sectors']:
         try:
