@@ -674,19 +674,45 @@ app.index_string = '''
 </html>
 '''
 
-# Initialize data with defaults - will be fetched on first request
-metrics = {
-    'initiatives': 0, 
-    'companies': 0, 
-    'sectors': 0, 
-    'categories': 0, 
-    'technologies': 0
-}
+# Initialize data - try to fetch immediately, fallback to defaults
+try:
+    metrics = fetch_metrics()
+    print("✅ Metrics loaded successfully at startup")
+except Exception as e:
+    print(f"⚠️ Could not load metrics at startup: {e}")
+    metrics = {
+        'initiatives': 0, 
+        'companies': 0, 
+        'sectors': 0, 
+        'categories': 0, 
+        'technologies': 0
+    }
+
 filter_options = {'sectors': [], 'categories': []}
 companies_list = []
 
+# Try to load filter options
+try:
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT DISTINCT company_sector FROM companies WHERE company_sector IS NOT NULL ORDER BY company_sector")
+    filter_options['sectors'] = [row['company_sector'] for row in cursor.fetchall()]
+    cursor.execute("SELECT DISTINCT category FROM initiatives WHERE category IS NOT NULL ORDER BY category")
+    filter_options['categories'] = [row['category'] for row in cursor.fetchall()]
+    conn.close()
+    print("✅ Filter options loaded successfully at startup")
+except Exception as e:
+    print(f"⚠️ Could not load filter options at startup: {e}")
+
+# Try to load companies list
+try:
+    companies_list = fetch_companies_list()
+    print("✅ Companies list loaded successfully at startup")
+except Exception as e:
+    print(f"⚠️ Could not load companies list at startup: {e}")
+
 def load_initial_data():
-    """Load initial data on first request"""
+    """Reload data if needed (backup function)"""
     global metrics, filter_options, companies_list
     
     if metrics['initiatives'] == 0:
