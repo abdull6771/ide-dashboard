@@ -674,25 +674,39 @@ app.index_string = '''
 </html>
 '''
 
-# Fetch initial data
-metrics = fetch_metrics()
+# Initialize data as None - will be fetched on first request
+metrics = None
 filter_options = {'sectors': [], 'categories': []}
-try:
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT company_sector FROM companies WHERE company_sector IS NOT NULL ORDER BY company_sector")
-    filter_options['sectors'] = [row['company_sector'] for row in cursor.fetchall()]
-    cursor.execute("SELECT DISTINCT category FROM initiatives WHERE category IS NOT NULL ORDER BY category")
-    filter_options['categories'] = [row['category'] for row in cursor.fetchall()]
-    conn.close()
-except:
-    pass
-
 companies_list = []
-try:
-    companies_list = fetch_companies_list()
-except:
-    pass
+
+def load_initial_data():
+    """Load initial data on first request"""
+    global metrics, filter_options, companies_list
+    
+    if metrics is None:
+        try:
+            metrics = fetch_metrics()
+        except:
+            metrics = {'total_initiatives': 0, 'total_companies': 0, 'total_sectors': 0, 
+                      'total_categories': 0, 'total_technologies': 0}
+    
+    if not filter_options['sectors']:
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT DISTINCT company_sector FROM companies WHERE company_sector IS NOT NULL ORDER BY company_sector")
+            filter_options['sectors'] = [row['company_sector'] for row in cursor.fetchall()]
+            cursor.execute("SELECT DISTINCT category FROM initiatives WHERE category IS NOT NULL ORDER BY category")
+            filter_options['categories'] = [row['category'] for row in cursor.fetchall()]
+            conn.close()
+        except:
+            pass
+    
+    if not companies_list:
+        try:
+            companies_list = fetch_companies_list()
+        except:
+            pass
 
 # ==================== LAYOUT ====================
 
@@ -1055,6 +1069,7 @@ def toggle_insights(n, is_open):
     Input("search-input", "value")
 )
 def update_quick_insights(_):
+    load_initial_data()  # Ensure data is loaded
     insights = fetch_quick_insights()
     
     return [
@@ -1100,6 +1115,7 @@ def update_quick_insights(_):
      Input("category-filter", "value")]
 )
 def update_data_store(search, sector, category):
+    load_initial_data()  # Ensure data is loaded
     df = fetch_all_data()
     
     # Apply filters
