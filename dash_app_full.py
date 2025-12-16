@@ -17,6 +17,7 @@ import dash_bootstrap_components as dbc
 import json
 import base64
 import io
+from sector_mapping import COMPANY_SECTOR_MAPPING, get_all_sectors, get_sector_for_company
 
 # Load environment variables
 load_dotenv()
@@ -55,7 +56,15 @@ def fetch_all_data():
             LEFT JOIN companies c ON i.company_id = c.id
         """)
         data = cursor.fetchall()
-        return pd.DataFrame(data)
+        df = pd.DataFrame(data)
+        
+        # Apply sector mapping from company list.pdf
+        if not df.empty and 'company_name' in df.columns:
+            df['company_sector'] = df['company_name'].apply(
+                lambda x: get_sector_for_company(x) if pd.notna(x) else None
+            )
+        
+        return df
     finally:
         conn.close()
 
@@ -113,8 +122,8 @@ def fetch_metrics():
         cursor.execute("SELECT COUNT(DISTINCT id) as count FROM companies")
         total_companies = cursor.fetchone()['count']
         
-        cursor.execute("SELECT COUNT(DISTINCT company_sector) as count FROM companies WHERE company_sector IS NOT NULL")
-        total_sectors = cursor.fetchone()['count']
+        # Use the official 12 sectors from the mapping
+        total_sectors = 12
         
         cursor.execute("SELECT COUNT(DISTINCT category) as count FROM initiatives WHERE category IS NOT NULL")
         total_categories = cursor.fetchone()['count']
@@ -234,7 +243,15 @@ def fetch_plct_data():
             LEFT JOIN companies c ON i.company_id = c.id
             WHERE i.plct_total_score IS NOT NULL
         """)
-        return pd.DataFrame(cursor.fetchall())
+        df = pd.DataFrame(cursor.fetchall())
+        
+        # Apply sector mapping from company list.pdf
+        if not df.empty and 'company_name' in df.columns:
+            df['company_sector'] = df['company_name'].apply(
+                lambda x: get_sector_for_company(x) if pd.notna(x) else None
+            )
+        
+        return df
     finally:
         conn.close()
 
@@ -264,7 +281,15 @@ def fetch_company_data(company_name):
             LEFT JOIN companies c ON i.company_id = c.id
             WHERE c.company_name = %s
         """, (company_name,))
-        return pd.DataFrame(cursor.fetchall())
+        df = pd.DataFrame(cursor.fetchall())
+        
+        # Apply sector mapping from company list.pdf
+        if not df.empty and 'company_name' in df.columns:
+            df['company_sector'] = df['company_name'].apply(
+                lambda x: get_sector_for_company(x) if pd.notna(x) else None
+            )
+        
+        return df
     finally:
         conn.close()
 
@@ -688,15 +713,13 @@ except Exception as e:
         'technologies': 0
     }
 
-filter_options = {'sectors': [], 'categories': []}
+filter_options = {'sectors': get_all_sectors(), 'categories': []}
 companies_list = []
 
-# Try to load filter options
+# Try to load filter options (categories only, sectors come from mapping)
 try:
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT company_sector FROM companies WHERE company_sector IS NOT NULL ORDER BY company_sector")
-    filter_options['sectors'] = [row['company_sector'] for row in cursor.fetchall()]
     cursor.execute("SELECT DISTINCT category FROM initiatives WHERE category IS NOT NULL ORDER BY category")
     filter_options['categories'] = [row['category'] for row in cursor.fetchall()]
     conn.close()
@@ -722,11 +745,13 @@ def load_initial_data():
             pass
     
     if not filter_options['sectors']:
+        # Use the official 12 sectors from the mapping
+        filter_options['sectors'] = get_all_sectors()
+    
+    if not filter_options['categories']:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT DISTINCT company_sector FROM companies WHERE company_sector IS NOT NULL ORDER BY company_sector")
-            filter_options['sectors'] = [row['company_sector'] for row in cursor.fetchall()]
             cursor.execute("SELECT DISTINCT category FROM initiatives WHERE category IS NOT NULL ORDER BY category")
             filter_options['categories'] = [row['category'] for row in cursor.fetchall()]
             conn.close()
