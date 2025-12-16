@@ -119,8 +119,8 @@ def fetch_metrics():
         cursor.execute("SELECT COUNT(DISTINCT id) as count FROM initiatives")
         total_initiatives = cursor.fetchone()['count']
         
-        cursor.execute("SELECT COUNT(DISTINCT id) as count FROM companies")
-        total_companies = cursor.fetchone()['count']
+        # Use the client-specified company count
+        total_companies = 1072
         
         # Use the official 12 sectors from the mapping
         total_sectors = 12
@@ -533,6 +533,404 @@ def create_comparison_charts(df_a, df_b, company_a, company_b):
     )
     return fig
 
+# ==================== NEW VISUALIZATION FUNCTIONS ====================
+
+def create_sector_year_heatmap(df):
+    """Create heatmap showing initiatives by sector over years"""
+    if df.empty or 'company_sector' not in df.columns or 'report_year' not in df.columns:
+        return go.Figure()
+    
+    # Filter out null values
+    df_filtered = df[df['company_sector'].notna() & df['report_year'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    # Create pivot table
+    heatmap_data = df_filtered.groupby(['company_sector', 'report_year']).size().reset_index(name='count')
+    pivot = heatmap_data.pivot(index='company_sector', columns='report_year', values='count').fillna(0)
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=pivot.values,
+        x=pivot.columns,
+        y=pivot.index,
+        colorscale='Viridis',
+        text=pivot.values,
+        texttemplate='%{text}',
+        textfont={"size": 10},
+        colorbar=dict(title="Initiatives")
+    ))
+    
+    fig.update_layout(
+        height=600,
+        xaxis_title="Year",
+        yaxis_title="Sector",
+        margin=dict(l=200, r=50, t=50, b=50)
+    )
+    return fig
+
+def create_technology_timeline(df):
+    """Create timeline of top technology adoption"""
+    if df.empty or 'technology_used' not in df.columns or 'report_year' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['technology_used'].notna() & df['report_year'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    # Get top 10 technologies
+    top_tech = df_filtered['technology_used'].value_counts().head(10).index
+    df_top = df_filtered[df_filtered['technology_used'].isin(top_tech)]
+    
+    # Group by technology and year
+    timeline_data = df_top.groupby(['report_year', 'technology_used']).size().reset_index(name='count')
+    
+    fig = px.line(
+        timeline_data,
+        x='report_year',
+        y='count',
+        color='technology_used',
+        markers=True,
+        labels={'report_year': 'Year', 'count': 'Number of Initiatives', 'technology_used': 'Technology'}
+    )
+    
+    fig.update_layout(
+        height=500,
+        hovermode='x unified',
+        legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+    )
+    return fig
+
+def create_strategic_priority_chart(df):
+    """Create distribution of strategic priorities"""
+    if df.empty or 'strategic_priority' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['strategic_priority'].notna()]
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    priority_count = df_filtered['strategic_priority'].value_counts().reset_index()
+    priority_count.columns = ['priority', 'count']
+    
+    fig = px.bar(
+        priority_count,
+        x='priority',
+        y='count',
+        color='count',
+        color_continuous_scale='Blues',
+        labels={'priority': 'Strategic Priority', 'count': 'Number of Initiatives'}
+    )
+    
+    fig.update_layout(
+        showlegend=False,
+        height=400,
+        xaxis_tickangle=-45,
+        margin=dict(l=0, r=0, t=20, b=100)
+    )
+    return fig
+
+def create_investment_analysis(df):
+    """Create digital investment analysis by sector"""
+    if df.empty or 'digital_investment' not in df.columns or 'company_sector' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['digital_investment'].notna() & df['company_sector'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    investment_by_sector = df_filtered.groupby('company_sector')['digital_investment'].count().reset_index()
+    investment_by_sector.columns = ['sector', 'count']
+    investment_by_sector = investment_by_sector.sort_values('count', ascending=True)
+    
+    fig = px.bar(
+        investment_by_sector,
+        x='count',
+        y='sector',
+        orientation='h',
+        color='count',
+        color_continuous_scale='Oranges',
+        labels={'count': 'Investment Mentions', 'sector': 'Sector'}
+    )
+    
+    fig.update_layout(
+        showlegend=False,
+        height=500,
+        margin=dict(l=200, r=0, t=20, b=0)
+    )
+    return fig
+
+def create_top_companies_leaderboard(df):
+    """Create top 20 companies by initiative count"""
+    if df.empty or 'company_name' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['company_name'].notna()]
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    top_companies = df_filtered['company_name'].value_counts().head(20).reset_index()
+    top_companies.columns = ['company', 'initiatives']
+    top_companies = top_companies.sort_values('initiatives', ascending=True)
+    
+    fig = go.Figure(go.Bar(
+        x=top_companies['initiatives'],
+        y=top_companies['company'],
+        orientation='h',
+        marker=dict(
+            color=top_companies['initiatives'],
+            colorscale='Viridis',
+            showscale=True,
+            colorbar=dict(title="Initiatives")
+        ),
+        text=top_companies['initiatives'],
+        textposition='outside'
+    ))
+    
+    fig.update_layout(
+        height=600,
+        xaxis_title="Number of Initiatives",
+        yaxis_title="Company",
+        margin=dict(l=250, r=50, t=40, b=50),
+        showlegend=False
+    )
+    return fig
+
+def create_category_sector_heatmap(df):
+    """Create heatmap of categories vs sectors"""
+    if df.empty or 'category' not in df.columns or 'company_sector' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['category'].notna() & df['company_sector'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    # Get top 15 categories
+    top_categories = df_filtered['category'].value_counts().head(15).index
+    df_top = df_filtered[df_filtered['category'].isin(top_categories)]
+    
+    # Create pivot table
+    heatmap_data = df_top.groupby(['category', 'company_sector']).size().reset_index(name='count')
+    pivot = heatmap_data.pivot(index='category', columns='company_sector', values='count').fillna(0)
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=pivot.values,
+        x=pivot.columns,
+        y=pivot.index,
+        colorscale='YlOrRd',
+        text=pivot.values,
+        texttemplate='%{text}',
+        textfont={"size": 9},
+        colorbar=dict(title="Count")
+    ))
+    
+    fig.update_layout(
+        height=600,
+        xaxis_title="Sector",
+        yaxis_title="Category",
+        margin=dict(l=250, r=50, t=50, b=150),
+        xaxis_tickangle=-45
+    )
+    return fig
+
+def create_yoy_growth_chart(df):
+    """Create year-over-year growth analysis"""
+    if df.empty or 'report_year' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['report_year'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    yearly_count = df_filtered.groupby('report_year').size().reset_index(name='count')
+    yearly_count = yearly_count.sort_values('report_year')
+    
+    # Calculate YoY growth
+    yearly_count['yoy_growth'] = yearly_count['count'].pct_change() * 100
+    
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+    
+    fig.add_trace(
+        go.Bar(x=yearly_count['report_year'], y=yearly_count['count'], name="Initiatives", marker_color='#667eea'),
+        secondary_y=False
+    )
+    
+    fig.add_trace(
+        go.Scatter(x=yearly_count['report_year'], y=yearly_count['yoy_growth'], name="YoY Growth %", 
+                   mode='lines+markers', marker_color='#f093fb', line=dict(width=3)),
+        secondary_y=True
+    )
+    
+    fig.update_xaxes(title_text="Year")
+    fig.update_yaxes(title_text="Number of Initiatives", secondary_y=False)
+    fig.update_yaxes(title_text="YoY Growth (%)", secondary_y=True)
+    
+    fig.update_layout(height=400, hovermode='x unified')
+    return fig
+
+def create_innovation_trend(df):
+    """Create innovation level trend over time"""
+    if df.empty or 'innovation_level' not in df.columns or 'report_year' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['innovation_level'].notna() & df['report_year'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    innovation_trend = df_filtered.groupby(['report_year', 'innovation_level']).size().reset_index(name='count')
+    
+    fig = px.area(
+        innovation_trend,
+        x='report_year',
+        y='count',
+        color='innovation_level',
+        labels={'report_year': 'Year', 'count': 'Number of Initiatives', 'innovation_level': 'Innovation Level'}
+    )
+    
+    fig.update_layout(
+        height=400,
+        hovermode='x unified',
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    return fig
+
+def create_report_type_distribution(df):
+    """Create distribution of report types"""
+    if df.empty or 'report_type' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['report_type'].notna()]
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    report_count = df_filtered['report_type'].value_counts().reset_index()
+    report_count.columns = ['type', 'count']
+    
+    fig = px.pie(
+        report_count,
+        values='count',
+        names='type',
+        hole=0.4,
+        color_discrete_sequence=px.colors.sequential.RdBu
+    )
+    
+    fig.update_layout(
+        height=400,
+        legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5)
+    )
+    return fig
+
+def create_maturity_by_sector(df):
+    """Create maturity level distribution by sector"""
+    if df.empty or 'digital_maturity_level' not in df.columns or 'company_sector' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['digital_maturity_level'].notna() & df['company_sector'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    maturity_sector = df_filtered.groupby(['company_sector', 'digital_maturity_level']).size().reset_index(name='count')
+    
+    fig = px.bar(
+        maturity_sector,
+        x='company_sector',
+        y='count',
+        color='digital_maturity_level',
+        labels={'company_sector': 'Sector', 'count': 'Number of Initiatives', 'digital_maturity_level': 'Maturity Level'},
+        barmode='stack'
+    )
+    
+    fig.update_layout(
+        height=500,
+        xaxis_tickangle=-45,
+        margin=dict(l=0, r=0, t=20, b=150),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+    )
+    return fig
+
+def create_sector_performance_metrics(df):
+    """Create sector performance comparison with multiple metrics"""
+    if df.empty or 'company_sector' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['company_sector'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    # Calculate metrics by sector
+    sector_metrics = df_filtered.groupby('company_sector').agg({
+        'id': 'count',
+        'company_name': 'nunique'
+    }).reset_index()
+    sector_metrics.columns = ['sector', 'initiatives', 'companies']
+    sector_metrics['avg_initiatives_per_company'] = sector_metrics['initiatives'] / sector_metrics['companies']
+    sector_metrics = sector_metrics.sort_values('initiatives', ascending=True)
+    
+    fig = go.Figure()
+    
+    fig.add_trace(go.Bar(
+        y=sector_metrics['sector'],
+        x=sector_metrics['initiatives'],
+        name='Total Initiatives',
+        orientation='h',
+        marker_color='#667eea'
+    ))
+    
+    fig.update_layout(
+        height=600,
+        xaxis_title="Number of Initiatives",
+        yaxis_title="Sector",
+        margin=dict(l=250, r=50, t=40, b=50),
+        showlegend=True
+    )
+    return fig
+
+def create_technology_by_sector(df):
+    """Create technology distribution by sector"""
+    if df.empty or 'technology_used' not in df.columns or 'company_sector' not in df.columns:
+        return go.Figure()
+    
+    df_filtered = df[df['technology_used'].notna() & df['company_sector'].notna()].copy()
+    
+    if df_filtered.empty:
+        return go.Figure()
+    
+    # Get top 10 technologies
+    top_tech = df_filtered['technology_used'].value_counts().head(10).index
+    df_top = df_filtered[df_filtered['technology_used'].isin(top_tech)]
+    
+    tech_sector = df_top.groupby(['company_sector', 'technology_used']).size().reset_index(name='count')
+    
+    fig = px.bar(
+        tech_sector,
+        x='company_sector',
+        y='count',
+        color='technology_used',
+        labels={'company_sector': 'Sector', 'count': 'Number of Initiatives', 'technology_used': 'Technology'},
+        barmode='group'
+    )
+    
+    fig.update_layout(
+        height=600,
+        xaxis_tickangle=-45,
+        margin=dict(l=0, r=0, t=20, b=150),
+        legend=dict(orientation="v", yanchor="top", y=1, xanchor="left", x=1.02)
+    )
+    return fig
+
+# ==================== END NEW VISUALIZATION FUNCTIONS ====================
+
+
 # Initialize Dash app
 app = Dash(
     __name__,
@@ -942,9 +1340,113 @@ app.layout = dbc.Container([
                 html.Div([
                     html.H3("📊 Category Distribution", className="section-title"),
                     dcc.Graph(id="category-treemap")
+                ], className="content-section"),
+                
+                html.Div([
+                    html.H3("🏭 Technology by Sector", className="section-title"),
+                    dcc.Graph(id="tech-by-sector-chart")
                 ], className="content-section")
             ])
         ], label=" Technology Patterns", tab_id="technology", label_style={"color": "black"}),
+        
+        # NEW: Trends & Insights Tab
+        dbc.Tab([
+            html.Div([
+                html.Div([
+                    html.H3("📈 Year-over-Year Growth Analysis", className="section-title"),
+                    html.P("Track initiative growth trends and identify acceleration periods", className="text-muted"),
+                    dcc.Graph(id="yoy-growth-chart")
+                ], className="content-section"),
+                
+                dbc.Row([
+                    dbc.Col([
+                        html.Div([
+                            html.H3("🔥 Sector-Year Heatmap", className="section-title"),
+                            html.P("Visualize initiative distribution across sectors over time", className="text-muted"),
+                            dcc.Graph(id="sector-year-heatmap")
+                        ], className="content-section")
+                    ], width=12, lg=6),
+                    
+                    dbc.Col([
+                        html.Div([
+                            html.H3("💡 Innovation Trend", className="section-title"),
+                            html.P("Evolution of innovation levels over time", className="text-muted"),
+                            dcc.Graph(id="innovation-trend-chart")
+                        ], className="content-section")
+                    ], width=12, lg=6),
+                ]),
+                
+                html.Div([
+                    html.H3("🚀 Technology Adoption Timeline", className="section-title"),
+                    html.P("Track the adoption of top technologies over the years", className="text-muted"),
+                    dcc.Graph(id="tech-timeline-chart")
+                ], className="content-section")
+            ])
+        ], label="📊 Trends & Insights", tab_id="trends", label_style={"color": "black"}),
+        
+        # NEW: Strategic Analysis Tab
+        dbc.Tab([
+            html.Div([
+                dbc.Row([
+                    dbc.Col([
+                        html.Div([
+                            html.H3("🎯 Strategic Priorities", className="section-title"),
+                            html.P("Distribution of strategic focus areas", className="text-muted"),
+                            dcc.Graph(id="strategic-priority-chart")
+                        ], className="content-section")
+                    ], width=12, lg=6),
+                    
+                    dbc.Col([
+                        html.Div([
+                            html.H3("💰 Digital Investment Analysis", className="section-title"),
+                            html.P("Investment mentions by sector", className="text-muted"),
+                            dcc.Graph(id="investment-chart")
+                        ], className="content-section")
+                    ], width=12, lg=6),
+                ]),
+                
+                dbc.Row([
+                    dbc.Col([
+                        html.Div([
+                            html.H3("📋 Report Type Distribution", className="section-title"),
+                            html.P("Types of reports analyzed", className="text-muted"),
+                            dcc.Graph(id="report-type-chart")
+                        ], className="content-section")
+                    ], width=12, lg=6),
+                    
+                    dbc.Col([
+                        html.Div([
+                            html.H3("🏆 Maturity by Sector", className="section-title"),
+                            html.P("Digital maturity distribution across sectors", className="text-muted"),
+                            dcc.Graph(id="maturity-sector-chart")
+                        ], className="content-section")
+                    ], width=12, lg=6),
+                ]),
+                
+                html.Div([
+                    html.H3("🔍 Category-Sector Cross-Analysis", className="section-title"),
+                    html.P("Heatmap showing initiative categories across sectors", className="text-muted"),
+                    dcc.Graph(id="category-sector-heatmap")
+                ], className="content-section")
+            ])
+        ], label="🎯 Strategic Analysis", tab_id="strategic", label_style={"color": "black"}),
+        
+        # NEW: Top Performers Tab
+        dbc.Tab([
+            html.Div([
+                html.Div([
+                    html.H3("🏅 Top 20 Companies Leaderboard", className="section-title"),
+                    html.P("Companies ranked by number of digital transformation initiatives", className="text-muted"),
+                    dcc.Graph(id="top-companies-chart")
+                ], className="content-section"),
+                
+                html.Div([
+                    html.H3("📊 Sector Performance Metrics", className="section-title"),
+                    html.P("Comparative analysis of sector activity levels", className="text-muted"),
+                    dcc.Graph(id="sector-performance-chart")
+                ], className="content-section")
+            ])
+        ], label="🏆 Top Performers", tab_id="performers", label_style={"color": "black"}),
         
         # PLCT Framework Tab
         dbc.Tab([
@@ -1277,6 +1779,51 @@ def update_charts(data_json):
     
     return (sector_fig, yearly_fig, maturity_fig, innovation_fig, tech_fig,
             category_treemap, cat_bar_fig, innov_pie_fig, sunburst_fig, table)
+
+# NEW: Callback for new visualization charts
+@callback(
+    [Output("yoy-growth-chart", "figure"),
+     Output("sector-year-heatmap", "figure"),
+     Output("innovation-trend-chart", "figure"),
+     Output("tech-timeline-chart", "figure"),
+     Output("strategic-priority-chart", "figure"),
+     Output("investment-chart", "figure"),
+     Output("report-type-chart", "figure"),
+     Output("maturity-sector-chart", "figure"),
+     Output("category-sector-heatmap", "figure"),
+     Output("top-companies-chart", "figure"),
+     Output("sector-performance-chart", "figure"),
+     Output("tech-by-sector-chart", "figure")],
+    Input("data-store", "data")
+)
+def update_new_charts(data_json):
+    if not data_json:
+        empty_fig = go.Figure()
+        return [empty_fig] * 12
+    
+    df = pd.read_json(data_json, orient='split')
+    
+    if df.empty:
+        empty_fig = go.Figure()
+        return [empty_fig] * 12
+    
+    # Create all new charts
+    yoy_fig = create_yoy_growth_chart(df)
+    sector_year_fig = create_sector_year_heatmap(df)
+    innovation_trend_fig = create_innovation_trend(df)
+    tech_timeline_fig = create_technology_timeline(df)
+    strategic_priority_fig = create_strategic_priority_chart(df)
+    investment_fig = create_investment_analysis(df)
+    report_type_fig = create_report_type_distribution(df)
+    maturity_sector_fig = create_maturity_by_sector(df)
+    category_sector_fig = create_category_sector_heatmap(df)
+    top_companies_fig = create_top_companies_leaderboard(df)
+    sector_performance_fig = create_sector_performance_metrics(df)
+    tech_by_sector_fig = create_technology_by_sector(df)
+    
+    return (yoy_fig, sector_year_fig, innovation_trend_fig, tech_timeline_fig,
+            strategic_priority_fig, investment_fig, report_type_fig, maturity_sector_fig,
+            category_sector_fig, top_companies_fig, sector_performance_fig, tech_by_sector_fig)
 
 @callback(
     Output("data-table-explorer", "children"),
