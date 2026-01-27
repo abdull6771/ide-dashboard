@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 import mysql.connector
 import fitz
+import pandas as pd
+import re
 
 # Setup logging
 logging.basicConfig(
@@ -15,6 +17,28 @@ logging.basicConfig(
 
 REPORTS_DIR = "Annual_Report_all"
 PROCESSED_FILES_LOG = "processed_files.json"
+
+
+# Load company code lookup
+def load_company_lookup():
+    """Load company code lookup from JSON"""
+    try:
+        with open('company_code_lookup.json', 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        logging.warning(f"Could not load company_code_lookup.json: {e}")
+        return {}
+
+
+# Load company codes by year
+def load_company_codes_by_year():
+    """Load all company codes by year from CSV"""
+    try:
+        df = pd.read_csv('company_codes_all_years.csv')
+        return df
+    except Exception as e:
+        logging.warning(f"Could not load company_codes_all_years.csv: {e}")
+        return pd.DataFrame()
 
 
 def extract_text_from_pdf(pdf_path):
@@ -509,7 +533,7 @@ CRITICAL EXTRACTION RULES - MANDATORY:
 ✅ DO estimate: ranges, scales, durations, qualitative impacts, strategic alignment
 
 Full Report Text:
-{text[:80000]}
+{text}
 """
 
 
@@ -617,14 +641,15 @@ def safe_json_dumps(value):
     return value
 
 
-def insert_into_mysql(extracted_data, mysql_config):
+def insert_into_mysql(extracted_data, mysql_config, stock_code=None):
     """Insert extracted data into MySQL database"""
     try:
         conn = mysql.connector.connect(
             host=mysql_config['host'],
             user=mysql_config['user'],
             password=mysql_config['password'],
-            database=mysql_config['database']
+            database=mysql_config['database'],
+            port=mysql_config.get('port', 3306)
         )
         cursor = conn.cursor()
         
@@ -632,16 +657,17 @@ def insert_into_mysql(extracted_data, mysql_config):
             # Insert company
             cursor.execute("""
                 INSERT INTO companies 
-                (company_name, company_sector, year_mentioned, report_type, technology_used, department, 
+                (stock_code, company_name, company_sector, year_mentioned, report_type, technology_used, department, 
                  digital_investment, digital_maturity_level, plct_dimensions, strategic_priority)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
-                company_sector=VALUES(company_sector), year_mentioned=VALUES(year_mentioned), 
+                company_sector=VALUES(company_sector), 
                 report_type=VALUES(report_type), technology_used=VALUES(technology_used), 
                 department=VALUES(department), digital_investment=VALUES(digital_investment),
                 digital_maturity_level=VALUES(digital_maturity_level), plct_dimensions=VALUES(plct_dimensions),
                 strategic_priority=VALUES(strategic_priority)
             """, (
+                stock_code,
                 company_data.get('CompanyName', 'Unknown'),
                 company_data.get('CompanySector'),
                 company_data.get('YearMentioned'),
@@ -658,8 +684,8 @@ def insert_into_mysql(extracted_data, mysql_config):
             company_id = cursor.lastrowid
             if company_id == 0:
                 # Get existing company ID
-                cursor.execute("SELECT id FROM companies WHERE company_name = %s", 
-                             (company_data.get('CompanyName', 'Unknown'),))
+                cursor.execute("SELECT id FROM companies WHERE stock_code = %s AND year_mentioned = %s", 
+                             (stock_code, company_data.get('YearMentioned')))
                 result = cursor.fetchone()
                 if result:
                     company_id = result[0]
@@ -696,7 +722,7 @@ def insert_into_mysql(extracted_data, mysql_config):
                 
                 cursor.execute("""
                     INSERT INTO initiatives 
-                    (company_id, category, initiative, plct_alignment, expected_impact, investment_amount,
+                    (company_id, stock_code, category, initiative, plct_alignment, expected_impact, investment_amount,
                      timeline, success_metrics, business_rationale, implementation_approach, workforce_impact,
                      technology_partners, innovation_level, risk_factors, competitive_advantage, 
                      policy_implications, governance_structure, data_strategy, security_considerations, 
@@ -713,10 +739,11 @@ def insert_into_mysql(extracted_data, mysql_config):
                      disclosure_quality_tier,
                      confidence_level, confidence_justification, confidence_flagged_for_verification,
                      confidence_verification_notes)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     company_id,
+                    stock_code,
                     initiative.get('Category'),
                     initiative.get('Initiative'),
                     initiative.get('PLCTAlignment'),
@@ -796,10 +823,69 @@ def initialize_environment():
         'host': os.getenv('MYSQL_HOST'),
         'user': os.getenv('MYSQL_USER'),
         'password': os.getenv('MYSQL_PASSWORD'),
-        'database': os.getenv('MYSQL_DATABASE')
+        'database': os.getenv('MYSQL_DATABASE'),
+        'port': int(os.getenv('MYSQL_PORT', 3306))
     }
     
     return mysql_config
+
+
+
+def load_sector_map():
+    """Load the official sector map"""
+    try:
+        with open('sector_map.json', 'r') as f:
+            return json.load(f)
+    except Exception as e:
+        logging.error(f"Could not load sector_map.json: {e}")
+        return {}
+
+def match_company_to_stock_code(filename, company_name, company_codes_df):
+    """
+    Match a company from filename or extracted name to a stock code
+    Returns: (stock_code, official_company_name, year) or (None, None, None)
+    """
+    # Extract year from filename (look for 2021-2025)
+    year_match = re.search(r'20(2[1-5])', filename)
+    year = int(year_match.group(0)) if year_match else None
+    
+    # Clean filename for matching
+    clean_filename = filename.replace('.pdf', '').upper()
+    clean_company_name = company_name.upper() if company_name else ""
+    
+    # Remove common words
+    for word in [' ANNUAL', ' REPORT', ' CORPORATE', ' GOVERNANCE', ' CG', ' AR', ' INTEGRATED']:
+        clean_filename = clean_filename.replace(word, '')
+        clean_company_name = clean_company_name.replace(word, '')
+    
+    # Try exact match first
+    for _, row in company_codes_df.iterrows():
+        official_name = row['company_name'].upper()
+        
+        # Check if official name is in filename or extracted name
+        if official_name in clean_filename or official_name in clean_company_name:
+            return row['stock_code'], row['company_name'], row['year']
+        
+        # Check reverse - filename in official name
+        if clean_filename and len(clean_filename) > 10 and clean_filename in official_name:
+            return row['stock_code'], row['company_name'], row['year']
+    
+    # Try partial matching (remove suffixes)
+    for _, row in company_codes_df.iterrows():
+        official_name = row['company_name'].upper()
+        # Remove legal suffixes
+        for suffix in [' BERHAD', ' BHD', ' SDN', ' (M)', ' HOLDINGS', ' GROUP']:
+            official_name = official_name.replace(suffix, '')
+        
+        clean_official = re.sub(r'[^\w\s]', '', official_name).strip()
+        clean_file = re.sub(r'[^\w\s]', '', clean_filename).strip()
+        clean_extracted = re.sub(r'[^\w\s]', '', clean_company_name).strip()
+        
+        if clean_official and (clean_official in clean_file or clean_official in clean_extracted):
+            return row['stock_code'], row['company_name'], row['year']
+    
+    logging.warning(f"Could not match stock code for: {filename} / {company_name}")
+    return None, None, year
 
 
 def main():
@@ -808,6 +894,14 @@ def main():
     
     # Initialize environment
     mysql_config = initialize_environment()
+    
+    # Load Sector Map
+    SECTOR_MAP = load_sector_map()
+    logging.info(f"Loaded {len(SECTOR_MAP)} companies from sector map.")
+    
+    # Load company codes
+    company_codes_df = load_company_codes_by_year()
+    logging.info(f"Loaded {len(company_codes_df)} company-year records")
     
     # Get PDF files
     if not os.path.exists(REPORTS_DIR):
@@ -829,7 +923,7 @@ def main():
     
     if not files_to_process:
         logging.info("All PDF files have already been processed. Nothing to do.")
-        return
+        pass
     
     logging.info(f"Processing {len(files_to_process)} out of {len(pdf_files)} total PDF files")
     
@@ -852,13 +946,72 @@ def main():
             logging.warning(f"No data extracted from {filename}")
             continue
         
+        # Match company to stock code
+        for company in extracted_data:
+            ai_company_name = company.get('CompanyName', '')
+            
+            # Try to match stock code
+            stock_code, official_name, matched_year = match_company_to_stock_code(
+                filename, ai_company_name, company_codes_df
+            )
+            
+            if stock_code:
+                logging.info(f"Matched: {filename} -> {official_name} ({stock_code})")
+                # Don't update company name yet - we'll use the exact format from sector_map
+                
+                # Update year if extracted year differs from filename year
+                if matched_year and not company.get('YearMentioned'):
+                    company['YearMentioned'] = matched_year
+            else:
+                logging.warning(f"No stock code match for {filename}")
+                stock_code = None
+            
+            # === SECTOR OVERRIDE LOGIC & EXACT COMPANY NAME FROM SECTOR MAP ===
+            matched_sector = None
+            matched_company_name = None
+            
+            # 1. Exact Name Match in sector map
+            if ai_company_name in SECTOR_MAP:
+                matched_sector = SECTOR_MAP[ai_company_name]
+                matched_company_name = ai_company_name
+            elif official_name and official_name in SECTOR_MAP:
+                matched_sector = SECTOR_MAP[official_name]
+                matched_company_name = official_name
+            
+            # 2. Partial match in sector map
+            if not matched_sector:
+                normalized_file = filename.replace('.pdf', '')
+                for map_name, map_sector in SECTOR_MAP.items():
+                    clean_map_name = map_name.replace(' Bhd', '').replace(' Berhad', '').strip()
+                    if clean_map_name.lower() in normalized_file.lower():
+                        matched_sector = map_sector
+                        matched_company_name = map_name  # Use exact format from sector_map.json
+                        logging.info(f"Matched sector via filename: {filename} -> {map_name} -> {matched_sector}")
+                        break
+            
+            if matched_sector:
+                logging.info(f"OVERRIDING SECTOR: {company.get('CompanySector')} -> {matched_sector}")
+                company['CompanySector'] = matched_sector
+                
+                # Update company name to exact format from sector_map.json
+                if matched_company_name:
+                    company['CompanyName'] = matched_company_name
+                    logging.info(f"Using exact company name from sector_map: {matched_company_name}")
+            else:
+                logging.info(f"No sector match found. Keeping AI sector: {company.get('CompanySector')}")
+                # If we have a stock code match but no sector match, use official name from CSV
+                if stock_code and official_name:
+                    company['CompanyName'] = official_name
+
+        
         # Output results
         print(f"\n=== Extracted from {filename} ===")
         print(json.dumps(extracted_data, indent=2))
         
         # Insert into MySQL
         if all(mysql_config.values()):
-            success = insert_into_mysql(extracted_data, mysql_config)
+            # Use the matched stock code
+            success = insert_into_mysql(extracted_data, mysql_config, stock_code)
             if success:
                 # Mark file as processed only if insertion was successful
                 save_processed_file(filename)

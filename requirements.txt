@@ -6,3 +6,5 @@ pymysql==1.1.1
 python-dotenv==1.0.1
 gunicorn==21.2.0
 numpy==1.26.4
+streamlit==1.31.0
+mysql-connector-python==8.3.0
