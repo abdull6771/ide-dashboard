@@ -1,10 +1,9 @@
-dash
-dash-bootstrap-components
-plotly
-pandas
-pymysql
-python-dotenv
-gunicorn
-numpy
 streamlit
+pandas
+plotly
+numpy
 mysql-connector-python
+python-dotenv
+altair
+pymysql
+gunicorn
