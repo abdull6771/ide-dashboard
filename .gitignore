@@ -28,9 +28,18 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Project specific
+# Project specific - Folders
 Annual_Report_all/
 annual_reports/
+CG/
+companies/
+csv/
+dooc/
+Malaysia Listed Companies Annual Report/
+utils/
+visualizations/
+
+# Project specific - Files
 processed_files.json
 *.json
 !requirements.txt
@@ -47,3 +56,5 @@ streamlit.log
 # Documentation (except README.md)
 *.md
 !README.md
+
+#Folder for storing downloaded files
