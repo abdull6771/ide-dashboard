@@ -273,7 +273,7 @@ def load_company_ranking():
             uc.total_reports, COUNT(i.id) as total_initiatives,
             ROUND(AVG(i.plct_total_score), 2) as avg_plct_score,
             ROUND(AVG(i.disclosure_quality_total_score), 2) as avg_disclosure_score,
-            COUNT(CASE WHEN i.innovation_level = 'High' THEN 1 END) as high_innovation_count,
+            COUNT(CASE WHEN i.innovation_level = 'Transformational' THEN 1 END) as high_innovation_count,
             COUNT(CASE WHEN i.disclosure_quality_tier = 'Tier 1 - Excellent' THEN 1 END) as excellent_disclosure_count
         FROM companies c
         JOIN unique_companies uc ON c.company_name = uc.company_name
@@ -578,7 +578,7 @@ if page == "🏠 Executive Overview":
             avg_disclosure = initiatives_df['disclosure_quality_total_score'].mean()
             st.metric("Avg Disclosure Score", f"{avg_disclosure:.1f}", delta=None)
         with col3:
-            high_innovation = (initiatives_df['innovation_level'] == 'High').sum()
+            high_innovation = (initiatives_df['innovation_level'] == 'Transformational').sum()
             st.metric("High Innovation Count", f"{high_innovation:,}", delta=None)
         with col4:
             total_initiatives = len(initiatives_df)
@@ -920,7 +920,7 @@ elif page == "🏢 Sector Analysis":
         # Sector Innovation & Disclosure Analysis
         st.subheader("💡 Sector Innovation & Disclosure Quality")
         sector_metrics = initiatives_df.groupby('company_sector').agg({
-            'innovation_level': lambda x: (x == 'High').sum(),
+            'innovation_level': lambda x: (x == 'Transformational').sum(),
             'disclosure_quality_total_score': 'mean',
             'company_name': 'count'
         }).reset_index()
@@ -1013,7 +1013,7 @@ elif page == "🏢 Sector Analysis":
             'company_name': 'nunique',
             'plct_total_score': ['mean', 'std'],
             'disclosure_quality_total_score': ['mean', 'std'],
-            'innovation_level': lambda x: f"{(x == 'High').sum()}/{len(x)}"
+            'innovation_level': lambda x: f"{(x == 'Transformational').sum()}/{len(x)}"
         }).reset_index()
         sector_summary.columns = ['Sector', 'Companies', 'Avg PLCT', 'PLCT StdDev', 'Avg Disclosure', 'Disclosure StdDev', 'High Innovation']
         sector_summary = sector_summary.sort_values('Avg PLCT', ascending=False)
@@ -1834,7 +1834,7 @@ elif page == "💡 Technology Trends":
             'company_name': 'nunique',
             'plct_total_score': ['mean', 'std'],
             'disclosure_quality_total_score': 'mean',
-            'innovation_level': lambda x: f"{(x == 'High').sum()}/{len(x)}",
+            'innovation_level': lambda x: f"{(x == 'Transformational').sum()}/{len(x)}",
             'year_mentioned': 'count'
         }).reset_index()
         tech_summary.columns = ['Technology', 'Companies', 'Avg PLCT', 'PLCT StdDev', 'Avg Disclosure', 'High Innovation', 'Total Initiatives']
