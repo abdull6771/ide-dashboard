@@ -763,13 +763,15 @@ if page == "🏠 Executive Overview":
             st.markdown(f"- **{total_initiatives:,}** digital transformation initiatives documented")
             st.markdown(f"- **{high_innovation:,}** high-innovation initiatives identified")
             st.markdown(f"- Average PLCT maturity score of **{avg_plct:.1f}** out of 400")
-            st.markdown(f"- **{(initiatives_df['disclosure_quality_tier'] == 'Tier 1 - Excellent').sum():,}** initiatives with excellent disclosure quality")
+            # Count Tier 1 disclosure quality (various formats)
+            tier1_count = initiatives_df['disclosure_quality_tier'].str.contains('Tier 1|Comprehensive', case=False, na=False).sum()
+            st.markdown(f"- **{tier1_count:,}** initiatives with comprehensive disclosure quality")
         
         with col2:
             st.markdown("### 🏆 Top Performers")
             top_5_companies = ranking_df.nlargest(5, 'avg_plct_score')
-            for idx, row in top_5_companies.iterrows():
-                st.markdown(f"**{idx+1}. {row['company_name']}** ({row['company_sector']}) - PLCT: {row['avg_plct_score']:.1f}")
+            for idx, row in enumerate(top_5_companies.itertuples(), 1):
+                st.markdown(f"**{idx}. {row.company_name}** ({row.company_sector}) - PLCT: {row.avg_plct_score:.1f}")
         
     except Exception as e:
         st.error(f"Error loading data: {str(e)}")
